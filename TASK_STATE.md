@@ -11,6 +11,15 @@ Current clarified goal: determine and run the best bridge for two directions:
 
 ## Latest Update
 
+- Valid as of: 2026-06-17 17:20 EDT.
+- Real ChatGPT UI -> Local Codex Bridge Secure -> local Codex feedback loop passed on a clean worktree for the user's Uniswap research statement:
+  - `codex_read` produced a focused AMM/execution-quality revision plan.
+  - write-mode `codex_run` edited the target `.tex`.
+  - local Codex/terminal compiled and rendered the PDF outside the bridge.
+  - ChatGPT-triggered final `codex_read` job `bd50de86-07f5-4011-992f-9291f63e5c54` returned `PASS`, `blockers: none`.
+- New guardrail documented in `README.md` and `docs/chatgpt-setup.md`: keep `codex_run` narrow and do not ask Bridge-run Codex to compile, run long shell commands, or combine broad edits with verification. Use local Codex/terminal for compile/test/render, then send the updated file back through `codex_read` for ChatGPT review.
+- Observed limitation remains: ChatGPT UI can start and poll jobs, but automatic chained polling may still be blocked by OpenAI safety. The stable workaround is exact `jobId` polling or direct local status check.
+
 - Valid as of: 2026-06-17 16:52 EDT.
 - Screenshot failure root cause: the Secure MCP Tunnel control plane has an about-30s request deadline. A synchronous `codex_run` can keep running locally after ChatGPT has already returned `502 Upstream or external service errors`.
 - Fix implemented: Codex calls now fast-return before the tunnel deadline with `status=running` + `jobId`; results can be fetched with `codex_job_status`.
