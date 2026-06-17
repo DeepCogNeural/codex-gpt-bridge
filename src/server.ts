@@ -29,7 +29,10 @@ export function createBridgeMcpServer(
 }
 
 export function createHttpServer(config: BridgeConfig, upstream: CodexUpstream): HttpServer {
-  const app = createMcpExpressApp();
+  const app = createMcpExpressApp({
+    allowedHosts: config.allowedHosts,
+    host: config.host
+  });
   const sessions = new SessionRegistry();
 
   app.get("/healthz", (_req: Request, res: Response) => {

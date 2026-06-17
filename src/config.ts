@@ -9,6 +9,7 @@ export type BridgeConfig = {
   port: number;
   token?: string;
   noAuth: boolean;
+  allowedHosts?: string[];
   codexCommand: string;
   allowedRoots: string[];
   defaultSandbox: SandboxMode;
@@ -26,6 +27,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BridgeConfig {
   const port = parsePort(env.CODEX_GPT_BRIDGE_PORT || "8765");
   const token = normalizeOptional(env.CODEX_GPT_BRIDGE_TOKEN);
   const noAuth = parseBool(env.CODEX_GPT_BRIDGE_NO_AUTH);
+  const allowedHosts = parseAllowedHosts(env.CODEX_GPT_BRIDGE_ALLOWED_HOSTS);
   const allowedRoots = parseAllowedRoots(env.CODEX_GPT_BRIDGE_ROOTS || process.cwd());
   const defaultSandbox = parseSandbox(env.CODEX_GPT_BRIDGE_DEFAULT_SANDBOX || "read-only");
   const allowWorkspaceWrite = parseBool(env.CODEX_GPT_BRIDGE_ALLOW_WRITE);
@@ -53,6 +55,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BridgeConfig {
     port,
     token,
     noAuth,
+    allowedHosts,
     codexCommand: env.CODEX_GPT_BRIDGE_CODEX || "codex",
     allowedRoots,
     defaultSandbox,
@@ -165,6 +168,14 @@ function parseAllowedRoots(raw: string): string[] {
     throw new Error("At least one allowed root is required.");
   }
   return Array.from(new Set(roots));
+}
+
+function parseAllowedHosts(raw: string | undefined): string[] | undefined {
+  const hosts = raw
+    ?.split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return hosts && hosts.length > 0 ? Array.from(new Set(hosts)) : undefined;
 }
 
 function parsePort(raw: string): number {
