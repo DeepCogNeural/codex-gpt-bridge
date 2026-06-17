@@ -74,6 +74,37 @@ In ChatGPT Settings -> Apps -> Create app:
 After connecting, `bridge_status` should show read-only policy and upstream
 Codex tools `codex,codex-reply`.
 
+## Prompt templates
+
+Use the ChatGPT app mention every time:
+
+```text
+@Local Codex Bridge Secure ...
+```
+
+Status check:
+
+```text
+@Local Codex Bridge Secure 调用 bridge_status。只返回 allowedRoots、defaultSandbox、allowWorkspaceWrite、allowDangerFullAccess、upstreamTools。
+```
+
+Ask Codex to inspect the current repo, then let ChatGPT answer:
+
+```text
+@Local Codex Bridge Secure 调用 codex_run：
+cwd=/Users/linghao/Github/codex-gpt-bridge
+sandbox=read-only
+prompt=调查这个 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。最后用简洁中文总结给我。
+```
+
+Continue after the first run returns a `threadId`:
+
+```text
+@Local Codex Bridge Secure 调用 codex_reply：
+threadId=<thread id from previous codex_run>
+prompt=继续上一轮，只读检查 docs/chatgpt-setup.md 有没有让新用户困惑的地方；不要修改任何文件。
+```
+
 Useful local service checks:
 
 ```bash

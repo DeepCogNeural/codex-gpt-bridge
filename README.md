@@ -32,6 +32,34 @@ ChatGPT directly:
 @Local Codex Bridge Secure 在 /Users/linghao/Github/codex-gpt-bridge 里只读检查 package.json，总结 scripts。
 ```
 
+### Prompt templates
+
+Always include three things: the app name, the absolute `cwd`, and the sandbox.
+Start with `read-only`.
+
+Status check:
+
+```text
+@Local Codex Bridge Secure 调用 bridge_status。只返回 allowedRoots、defaultSandbox、allowWorkspaceWrite、allowDangerFullAccess、upstreamTools。
+```
+
+Inspect files in a repo:
+
+```text
+@Local Codex Bridge Secure 调用 codex_run：
+cwd=/Users/linghao/Github/codex-gpt-bridge
+sandbox=read-only
+prompt=调查这个 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。
+```
+
+Continue the same Codex thread after `codex_run` returns a `threadId`:
+
+```text
+@Local Codex Bridge Secure 调用 codex_reply：
+threadId=<thread id from previous codex_run>
+prompt=继续上一轮，只读检查 README.md 和 docs/chatgpt-setup.md 是否解释清楚日常用法；不要修改任何文件。
+```
+
 One-time secure setup needs:
 
 ```bash
