@@ -17,6 +17,7 @@ export type BridgeConfig = {
   allowDangerFullAccess: boolean;
   defaultApprovalPolicy: ApprovalPolicy;
   upstreamTimeoutMs: number;
+  fastReturnMs: number;
   secretScan: boolean;
 };
 
@@ -34,6 +35,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BridgeConfig {
   const allowDangerFullAccess = parseBool(env.CODEX_GPT_BRIDGE_ALLOW_DANGER);
   const defaultApprovalPolicy = parseApprovalPolicy(env.CODEX_GPT_BRIDGE_APPROVAL_POLICY || "never");
   const upstreamTimeoutMs = parsePositiveInt(env.CODEX_GPT_BRIDGE_UPSTREAM_TIMEOUT_MS || "180000");
+  const fastReturnMs = parsePositiveInt(env.CODEX_GPT_BRIDGE_FAST_RETURN_MS || "25000");
   const secretScan = !parseBool(env.CODEX_GPT_BRIDGE_DISABLE_SECRET_SCAN);
 
   if (!token && !noAuth) {
@@ -63,6 +65,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BridgeConfig {
     allowDangerFullAccess,
     defaultApprovalPolicy,
     upstreamTimeoutMs,
+    fastReturnMs,
     secretScan
   };
 }

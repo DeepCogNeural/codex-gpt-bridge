@@ -5,13 +5,14 @@ import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js
 import type { NextFunction, Request, Response } from "express";
 import type { BridgeConfig } from "./config.js";
 import type { CodexUpstream } from "./upstream.js";
-import { registerBridgeTools } from "./tools.js";
+import { CodexJobRegistry, registerBridgeTools } from "./tools.js";
 import { SessionRegistry } from "./sessionRegistry.js";
 
 export function createBridgeMcpServer(
   config: BridgeConfig,
   upstream: CodexUpstream,
-  sessions = new SessionRegistry()
+  sessions = new SessionRegistry(),
+  jobs = new CodexJobRegistry()
 ): McpServer {
   const server = new McpServer(
     {
@@ -21,10 +22,10 @@ export function createBridgeMcpServer(
     },
     {
       instructions:
-        "Use codex_run only for tasks inside allowed roots. The bridge enforces sandbox and cwd policy. Do not request secrets or broad system access."
+        "Use codex_read for read-only project inspection inside allowed roots. Use codex_run only for intentional execution or write-mode tasks. The bridge enforces sandbox and cwd policy. Do not request secrets or broad system access."
     }
   );
-  registerBridgeTools(server, config, upstream, sessions);
+  registerBridgeTools(server, config, upstream, sessions, jobs);
   return server;
 }
 
@@ -34,6 +35,7 @@ export function createHttpServer(config: BridgeConfig, upstream: CodexUpstream):
     host: config.host
   });
   const sessions = new SessionRegistry();
+  const jobs = new CodexJobRegistry();
 
   app.get(
     ["/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/mcp"],
@@ -63,7 +65,7 @@ export function createHttpServer(config: BridgeConfig, upstream: CodexUpstream):
   });
 
   app.post("/mcp", async (req: Request, res: Response) => {
-    const server = createBridgeMcpServer(config, upstream, sessions);
+    const server = createBridgeMcpServer(config, upstream, sessions, jobs);
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined
     });

@@ -5,8 +5,10 @@ This bridge is intentionally smaller than a general remote-control daemon.
 ## What ChatGPT can do
 
 - Ask for bridge policy with `bridge_status`.
+- Start a read-only Codex inspection with `codex_read`.
 - Start a Codex MCP session with `codex_run`.
 - Continue that session with `codex_reply`.
+- Check long-running Codex jobs with `codex_job_status`.
 
 ## What ChatGPT cannot do through this bridge
 
@@ -15,7 +17,7 @@ This bridge is intentionally smaller than a general remote-control daemon.
 - Continue arbitrary Codex threads that were not first created through this bridge.
 - Continue tracked Codex threads forever; tracked sessions are in memory, capped at 1000 entries, and expire after 6 hours.
 - Change Codex config through an arbitrary `config` object.
-- Start `codex_run` when common sensitive files are present under `cwd`, unless secret scanning is explicitly disabled.
+- Start `codex_read` or `codex_run` when common sensitive files are present under `cwd`, unless secret scanning is explicitly disabled.
 - Use `workspace-write` unless the bridge owner explicitly enables it.
 - Request `danger-full-access` as a per-call ChatGPT option.
 

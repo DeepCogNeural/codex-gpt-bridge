@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { createHttpServer } from "../src/server.js";
 import { loadConfig } from "../src/config.js";
 import type { CodexUpstream, ToolResult } from "../src/upstream.js";
@@ -13,6 +15,31 @@ class FakeUpstream implements CodexUpstream {
   }
 
   async close(): Promise<void> {}
+}
+
+class DeferredUpstream extends FakeUpstream {
+  private pending: Array<(result: ToolResult) => void> = [];
+
+  override async callTool(): Promise<ToolResult> {
+    return new Promise<ToolResult>((resolve) => {
+      this.pending.push(resolve);
+    });
+  }
+
+  resolveNext(): void {
+    const resolve = this.pending.shift();
+    if (!resolve) {
+      throw new Error("No pending upstream call.");
+    }
+    resolve({
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({ threadId: "thread-1", content: "done" })
+        }
+      ]
+    });
+  }
 }
 
 const servers: Array<{ close: () => void }> = [];
@@ -63,15 +90,49 @@ describe("http server", () => {
     });
     expect(allowed.status).not.toBe(401);
   });
+
+  it("keeps async Codex jobs across stateless HTTP MCP requests", async () => {
+    const upstream = new DeferredUpstream();
+    const baseUrl = await start(
+      {
+        CODEX_GPT_BRIDGE_NO_AUTH: "1",
+        CODEX_GPT_BRIDGE_FAST_RETURN_MS: "5"
+      },
+      upstream
+    );
+    const client = new Client({
+      name: "http-test-client",
+      version: "0.0.0"
+    });
+    await client.connect(new StreamableHTTPClientTransport(new URL(`${baseUrl}/mcp`)));
+
+    const started = parseToolJson(
+      await client.callTool({
+        name: "codex_run",
+        arguments: {
+          prompt: "slow"
+        }
+      })
+    );
+    expect(started.status).toBe("running");
+    expect(typeof started.jobId).toBe("string");
+
+    upstream.resolveNext();
+    const completed = await waitForJobStatus(client, started.jobId, "completed");
+    expect(completed.status).toBe("completed");
+    expect(JSON.stringify(completed.result)).toContain("thread-1");
+
+    await client.close();
+  });
 });
 
-async function start(env: NodeJS.ProcessEnv): Promise<string> {
+async function start(env: NodeJS.ProcessEnv, upstream: CodexUpstream = new FakeUpstream()): Promise<string> {
   const config = loadConfig({
     ...env,
     CODEX_GPT_BRIDGE_HOST: "127.0.0.1",
     CODEX_GPT_BRIDGE_PORT: "1"
   });
-  const server = createHttpServer(config, new FakeUpstream());
+  const server = createHttpServer(config, upstream);
   servers.push(server);
   await new Promise<void>((resolve) => {
     server.listen(0, "127.0.0.1", resolve);
@@ -81,4 +142,27 @@ async function start(env: NodeJS.ProcessEnv): Promise<string> {
     throw new Error("Expected TCP server address");
   }
   return `http://127.0.0.1:${address.port}`;
+}
+
+function parseToolJson(result: unknown): Record<string, any> {
+  const content = (result as { content?: Array<{ text?: string }> }).content;
+  return JSON.parse(content?.[0]?.text || "{}");
+}
+
+async function waitForJobStatus(client: Client, jobId: string, expected: string): Promise<Record<string, any>> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const status = parseToolJson(
+      await client.callTool({
+        name: "codex_job_status",
+        arguments: {
+          jobId
+        }
+      })
+    );
+    if (status.status === expected) {
+      return status;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+  throw new Error(`Timed out waiting for job status ${expected}.`);
 }

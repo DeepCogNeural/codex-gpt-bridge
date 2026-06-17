@@ -11,11 +11,13 @@ Important boundary: the Codex -> model direction does not call the ChatGPT web U
 
 ## Daily ChatGPT -> Codex use
 
-Yes, this is MCP. ChatGPT sees `Local Codex Bridge Secure` as an app with three MCP tools:
+Yes, this is MCP. ChatGPT sees `Local Codex Bridge Secure` as an app with five MCP tools:
 
 - `bridge_status`
+- `codex_read`
 - `codex_run`
 - `codex_reply`
+- `codex_job_status`
 
 Best daily path is OpenAI Secure MCP Tunnel. After the one-time setup, keep the
 local daemon running with the Keychain-backed launcher:
@@ -31,15 +33,14 @@ If this is installed as a macOS LaunchAgent, there is no terminal step. Use
 ChatGPT directly:
 
 ```text
-@Local Codex Bridge Secure 调用 codex_run，只传 prompt：调查当前 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。
+@Local Codex Bridge Secure 调用 codex_read，只传 prompt：调查当前 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。
 ```
 
 ### Prompt templates
 
 Usually you only need the app name and the task. If the bridge has exactly one
-allowed root, `codex_run` uses that root automatically. The sandbox also defaults
-to the bridge policy, which is `read-only` unless you start the bridge in write
-mode.
+allowed root, `codex_read` uses that root automatically and always forces
+Codex `read-only`. Use `codex_run` only when you intentionally start write mode.
 
 Status check:
 
@@ -50,14 +51,24 @@ Status check:
 Inspect files in a repo:
 
 ```text
-@Local Codex Bridge Secure 调用 codex_run，只传 prompt：调查当前 allowed root 的顶层文件和目录，说明每个重要文件的用途；不要修改任何文件。
+@Local Codex Bridge Secure 调用 codex_read，只传 prompt：调查当前 allowed root 的顶层文件和目录，说明每个重要文件的用途；不要修改任何文件。如果返回 status=running 和 jobId，继续调用 codex_job_status 直到 completed 或 failed。
 ```
 
-Continue the same Codex thread after `codex_run` returns a `threadId`:
+If `codex_read` or `codex_run` returns `status=running`, poll the job:
+
+```text
+@Local Codex Bridge Secure 调用 codex_job_status：jobId=<job id from codex_read or codex_run>
+```
+
+ChatGPT may block automatic chained polling when it tries to reuse a `jobId`
+from the previous tool result by itself. If that happens, paste the exact
+`jobId` into the next prompt as shown above; that path is verified.
+
+Continue the same Codex thread after `codex_read` or `codex_run` returns a `threadId`:
 
 ```text
 @Local Codex Bridge Secure 调用 codex_reply：
-threadId=<thread id from previous codex_run>
+threadId=<thread id from previous codex_read or codex_run>
 prompt=继续上一轮，只读检查 README.md 和 docs/chatgpt-setup.md 是否解释清楚日常用法；不要修改任何文件。
 ```
 
@@ -107,7 +118,7 @@ For the other direction, Codex can already connect to stdio MCP servers. This pr
 ## Safety defaults
 
 - Binds to `127.0.0.1` by default.
-- Accepts `codex_run.cwd` only under the configured roots. This is a bridge-level starting-directory gate, not OS-level file isolation.
+- Accepts `codex_read.cwd` and `codex_run.cwd` only under the configured roots. This is a bridge-level starting-directory gate, not OS-level file isolation.
 - Uses Codex `read-only` sandbox by default.
 - Requires either `CODEX_GPT_BRIDGE_TOKEN` or explicit local-only `CODEX_GPT_BRIDGE_NO_AUTH=1`.
 - Does not expose raw shell, process control, full Codex app-server, or arbitrary Codex config.
@@ -223,7 +234,7 @@ Observed ChatGPT Developer Mode flow:
 3. Set MCP Server URL to the tunnel HTTPS `/mcp` endpoint.
 4. Set Authentication to No Auth for local smoke tests.
 5. Accept the custom MCP server risk warning and create/connect the app.
-6. In a chat, mention the app and ask it to call `bridge_status`, `codex_run`, or `codex_reply`.
+6. In a chat, mention the app and ask it to call `bridge_status`, `codex_read`, `codex_run`, `codex_reply`, or `codex_job_status`.
 
 ## Tools exposed to ChatGPT
 
@@ -231,9 +242,35 @@ Observed ChatGPT Developer Mode flow:
 
 Reports bridge policy, allowed roots, and upstream Codex MCP tool availability.
 
+### `codex_read`
+
+Starts a read-only Codex inspection in an allowed working directory. This is the
+default daily tool for repo investigation and planning context.
+
+It accepts the same `prompt`, optional `cwd`, and optional `timeoutMs` fields as
+`codex_run`, but it does not accept a sandbox option. The bridge always forwards
+`sandbox=read-only`.
+
+Long reads use the same `status=running` + `jobId` flow as `codex_run`.
+
 ### `codex_run`
 
-Starts a Codex session in an allowed working directory.
+Starts a Codex session in an allowed working directory. Use this for write-mode
+workflows; prefer `codex_read` for read-only investigation.
+
+If Codex finishes quickly, the tool returns the Codex result directly. If Codex
+runs longer than `CODEX_GPT_BRIDGE_FAST_RETURN_MS`, which defaults to 25 seconds,
+the tool returns:
+
+```json
+{
+  "status": "running",
+  "jobId": "..."
+}
+```
+
+Call `codex_job_status` with that `jobId` until the job is `completed` or
+`failed`.
 
 Required:
 
@@ -242,14 +279,14 @@ Required:
 Optional:
 
 - `cwd`: defaults to the only configured allowed root; required when multiple roots are configured.
-- `sandbox`: `read-only` or `workspace-write`
+- `sandbox`: `read-only` by default; `workspace-write` appears only when the bridge owner starts write mode.
 - `timeoutMs`
 
 Approval policy is owner-controlled through `CODEX_GPT_BRIDGE_APPROVAL_POLICY`; callers cannot lower it per request.
 
 Sensitive file preflight:
 
-`codex_run` refuses to start if it finds common secret files under `cwd`, including `.env`, `.npmrc`, `.netrc`, private SSH key names, `.pem`, `.key`, `.p12`, and `.pfx` files. Disable only for a deliberately sanitized environment:
+`codex_read` and `codex_run` refuse to start if they find common secret files under `cwd`, including `.env`, `.npmrc`, `.netrc`, private SSH key names, `.pem`, `.key`, `.p12`, and `.pfx` files. Disable only for a deliberately sanitized environment:
 
 ```bash
 CODEX_GPT_BRIDGE_DISABLE_SECRET_SCAN=1 codex-gpt-bridge
@@ -265,6 +302,16 @@ Required:
 - `prompt`
 
 The bridge rejects unknown thread ids and reruns the sensitive-file preflight against the original session directory before forwarding the reply.
+
+Long replies use the same `status=running` + `jobId` flow as `codex_run`.
+
+### `codex_job_status`
+
+Checks a long-running `codex_read`, `codex_run`, or `codex_reply` job.
+
+Required:
+
+- `jobId`
 
 Tracked sessions are in memory only, capped at 1000 entries, and expire after 6 hours. Restarting the bridge clears them.
 

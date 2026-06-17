@@ -15,7 +15,7 @@ ChatGPT UI -> OpenAI Secure MCP Tunnel -> Local Codex Bridge MCP -> local Codex 
 Daily use after setup:
 
 ```text
-@Local Codex Bridge Secure 调用 codex_run，只传 prompt：调查当前 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。
+@Local Codex Bridge Secure 调用 codex_read，只传 prompt：调查当前 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。
 ```
 
 If the macOS LaunchAgent is installed, there is no terminal step. If you want to
@@ -96,14 +96,20 @@ Status check:
 Ask Codex to inspect the current repo, then let ChatGPT answer:
 
 ```text
-@Local Codex Bridge Secure 调用 codex_run，只传 prompt：调查当前 allowed root 的顶层文件和目录，说明每个重要文件的用途；不要修改任何文件。最后用简洁中文总结给我。
+@Local Codex Bridge Secure 调用 codex_read，只传 prompt：调查当前 allowed root 的顶层文件和目录，说明每个重要文件的用途；不要修改任何文件。最后用简洁中文总结给我。如果返回 status=running 和 jobId，继续调用 codex_job_status 直到 completed 或 failed。
 ```
 
-Continue after the first run returns a `threadId`:
+Poll a long-running job:
+
+```text
+@Local Codex Bridge Secure 调用 codex_job_status：jobId=<job id from codex_read or codex_run>
+```
+
+Continue after the first read/run returns a `threadId`:
 
 ```text
 @Local Codex Bridge Secure 调用 codex_reply：
-threadId=<thread id from previous codex_run>
+threadId=<thread id from previous codex_read or codex_run>
 prompt=继续上一轮，只读检查 docs/chatgpt-setup.md 有没有让新用户困惑的地方；不要修改任何文件。
 ```
 
@@ -189,7 +195,7 @@ Authorization: Bearer <CODEX_GPT_BRIDGE_TOKEN>
 
 Call `bridge_status` first. It proves ChatGPT reached this bridge and this bridge reached the local official `codex mcp-server`.
 
-Only then call `codex_run` with a prompt. If the bridge has exactly one allowed
+Only then call `codex_read` with a prompt. If the bridge has exactly one allowed
 root, `cwd` is optional and defaults to that root:
 
 ```json
@@ -200,7 +206,21 @@ root, `cwd` is optional and defaults to that root:
 
 If multiple roots are configured, pass the absolute `cwd` explicitly.
 
-If `codex_run` reports sensitive-looking files, move those files outside the allowed root or create a sanitized staging copy. Disabling the preflight is possible but should be treated as accepting that ChatGPT/Codex may read those local files.
+If `codex_read` or `codex_run` returns `status=running`, ChatGPT should call
+`codex_job_status` with the returned `jobId` until status is `completed` or
+`failed`. This avoids Secure MCP Tunnel request timeouts for slower Codex runs.
+
+Observed ChatGPT UI behavior: automatic chained polling can be blocked when
+ChatGPT tries to reuse a `jobId` from a prior tool result. If that happens, send
+one explicit follow-up:
+
+```text
+@Local Codex Bridge Secure 调用 codex_job_status，只传 jobId：<exact jobId>
+```
+
+This exact-jobId path is verified.
+
+If `codex_read` or `codex_run` reports sensitive-looking files, move those files outside the allowed root or create a sanitized staging copy. Disabling the preflight is possible but should be treated as accepting that ChatGPT/Codex may read those local files.
 
 Allowed roots only control which `cwd` values the bridge accepts. They are not a hard filesystem sandbox.
 
@@ -219,7 +239,7 @@ CODEX_GPT_BRIDGE_ROOT="/absolute/path/to/repo" npm run bridge:chatgpt:secure:wri
 Then ask ChatGPT to call Codex normally:
 
 ```text
-@Local Codex Bridge Secure 调用 codex_run，只传 prompt：在当前 allowed root 内修改我的简历。先检查相关文件，说明计划，然后执行最小改动并运行可用检查。
+@Local Codex Bridge Secure 调用 codex_run，只传 prompt：在当前 allowed root 内修改我的简历。先检查相关文件，说明计划，然后执行最小改动并运行可用检查。如果返回 status=running 和 jobId，继续调用 codex_job_status 直到 completed 或 failed。
 ```
 
 This bridge does not expose `danger-full-access` as a per-call ChatGPT option.
