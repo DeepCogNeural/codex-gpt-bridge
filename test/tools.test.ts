@@ -33,6 +33,63 @@ class FakeUpstream implements CodexUpstream {
 }
 
 describe("bridge tools", () => {
+  it("advertises read-only annotations when write modes are disabled", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "bridge-root-"));
+    const upstream = new FakeUpstream();
+    const config = loadConfig({
+      CODEX_GPT_BRIDGE_NO_AUTH: "1",
+      CODEX_GPT_BRIDGE_ROOTS: root
+    });
+    const { client, close } = await connectTestClient(config, upstream);
+
+    const tools = await client.listTools();
+    const byName = new Map(tools.tools.map((tool) => [tool.name, tool]));
+
+    expect(byName.get("bridge_status")?.annotations).toMatchObject({
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false
+    });
+    expect(byName.get("codex_run")?.annotations).toMatchObject({
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false
+    });
+    expect(byName.get("codex_reply")?.annotations).toMatchObject({
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false
+    });
+
+    await close();
+  });
+
+  it("does not advertise Codex execution tools as read-only when write mode is enabled", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "bridge-root-"));
+    const upstream = new FakeUpstream();
+    const config = loadConfig({
+      CODEX_GPT_BRIDGE_NO_AUTH: "1",
+      CODEX_GPT_BRIDGE_ROOTS: root,
+      CODEX_GPT_BRIDGE_ALLOW_WRITE: "1",
+      CODEX_GPT_BRIDGE_DEFAULT_SANDBOX: "workspace-write"
+    });
+    const { client, close } = await connectTestClient(config, upstream);
+
+    const tools = await client.listTools();
+    const codexRun = tools.tools.find((tool) => tool.name === "codex_run");
+
+    expect(codexRun?.annotations).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: false,
+      openWorldHint: false
+    });
+
+    await close();
+  });
+
   it("sanitizes codex_run before forwarding to upstream", async () => {
     const root = mkdtempSync(path.join(tmpdir(), "bridge-root-"));
     const upstream = new FakeUpstream();

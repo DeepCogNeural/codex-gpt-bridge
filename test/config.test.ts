@@ -30,6 +30,15 @@ describe("config policy", () => {
     ).toThrow(/NO_AUTH/);
   });
 
+  it("accepts explicit MCP HTTP allowed hosts", () => {
+    const config = loadConfig({
+      CODEX_GPT_BRIDGE_ALLOWED_HOSTS: "127.0.0.1,localhost,example.trycloudflare.com",
+      CODEX_GPT_BRIDGE_NO_AUTH: "1"
+    });
+
+    expect(config.allowedHosts).toEqual(["127.0.0.1", "localhost", "example.trycloudflare.com"]);
+  });
+
   it("rejects cwd outside allowed roots", () => {
     const root = mkdtempSync(path.join(tmpdir(), "bridge-root-"));
     const other = mkdtempSync(path.join(tmpdir(), "bridge-other-"));

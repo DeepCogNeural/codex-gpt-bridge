@@ -11,13 +11,12 @@ Current clarified goal: determine and run the best bridge for two directions:
 
 ## Current Status
 
-- Valid as of: 2026-06-17 12:05:00 EDT.
+- Valid as of: 2026-06-17 14:10:00 EDT.
 - Repository: `https://github.com/DeepCogNeural/codex-gpt-bridge`.
 - Branch: `main`.
-- Latest commit before this state update: `ac4ed38 Initial codex gpt bridge`.
-- Local worktree was clean before the state update.
+- Latest pushed commit before this state update: `abd5c83 Add codex chatgpt mcp tool`.
 - Current testing policy: read-only only; do not enable `workspace-write` or `danger-full-access`.
-- User opened ChatGPT Developer mode. Do not create or approve any persistent connector beyond read-only testing without reporting the exact endpoint and risk.
+- User authorized completing the ChatGPT Developer Mode connector setup without further confirmation. Keep public no-auth tunnel use short-lived and read-only.
 
 ## Facts
 
@@ -29,10 +28,13 @@ Current clarified goal: determine and run the best bridge for two directions:
 - `OPENAI_API_KEY` is required for real `ask_chatgpt` calls. It is forwarded through `.codex/config.toml` `env_vars`, not written into the repo.
 - Default bridge policy remains `read-only`, `approval-policy=never`, `allowWorkspaceWrite=false`, `allowDangerFullAccess=false`.
 - `CODEX_GPT_BRIDGE_NO_AUTH=1` is acceptable only for localhost testing. Public/tunnel usage should use bearer token or an OAuth/PKCE proxy.
+- `CODEX_GPT_BRIDGE_ALLOWED_HOSTS` is needed when an HTTPS tunnel forwards a non-local Host header to a localhost-bound bridge.
+- Tool annotations now advertise read-only/non-destructive metadata when the bridge is configured read-only.
 
 ## Verification
 
 - `npm run check` passed on 2026-06-17 after Codex-to-model MCP addition: TypeScript build plus 18 Vitest tests.
+- `npm run check` passed on 2026-06-17 after tunnel host + tool annotation additions: TypeScript build plus 21 Vitest tests.
 - Project-scoped `codex mcp list --json` shows `chatgpt` enabled with stdio command `npm run chatgpt:mcp` and forwarded env vars `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `CODEX_CHATGPT_MODEL`, `CODEX_CHATGPT_TIMEOUT_MS`.
 - Local stdio MCP smoke using `npm run chatgpt:mcp` returned tool list `ask_chatgpt`; with no `OPENAI_API_KEY`, the tool returned the expected missing-key error.
 - `ask_chatgpt` `reasoningEffort` is constrained for the default `gpt-5.5` path to `none`, `low`, `medium`, `high`, and `xhigh`; tests cover `xhigh` pass-through and reject `minimal`.
@@ -51,11 +53,27 @@ Current clarified goal: determine and run the best bridge for two directions:
   - Unknown `codex_reply` thread id was rejected.
   - `codex_run` with `sandbox=workspace-write` was rejected before upstream execution.
 - `curl http://127.0.0.1:8876/healthz` returned `{"ok":true,"name":"codex-gpt-bridge"}`.
+- Temporary Cloudflare quick tunnel was started with `npx -y cloudflared tunnel --url http://127.0.0.1:8876`.
+- Tunnel URL used for the UI smoke test: `https://phpbb-smithsonian-comics-future.trycloudflare.com/mcp`.
+- Initial tunnel health check failed with MCP SDK DNS-rebinding protection: `Invalid Host: phpbb-smithsonian-comics-future.trycloudflare.com`.
+- After adding `CODEX_GPT_BRIDGE_ALLOWED_HOSTS=127.0.0.1,localhost,phpbb-smithsonian-comics-future.trycloudflare.com`, `curl https://phpbb-smithsonian-comics-future.trycloudflare.com/healthz` returned `{"ok":true,"name":"codex-gpt-bridge"}`.
+- SDK Streamable HTTP client connected through the tunnel and listed tools `bridge_status,codex_run,codex_reply`.
+- ChatGPT Developer Mode app `Local Codex Bridge` was created and connected with:
+  - Server URL: `https://phpbb-smithsonian-comics-future.trycloudflare.com/mcp`
+  - Authentication: `No Auth`
+  - ChatGPT App Id: `asdk_app_6a32e194a70881919a6b32299c71cbb0`
+  - ChatGPT Version Id: `asdk_app_v_6a32e198e09c81919214894629e3145c`
+- ChatGPT UI -> bridge `bridge_status` succeeded and returned allowed root `/Users/linghao/Github/codex-gpt-bridge`, `read-only`, no write/danger permissions, and upstream tools `codex,codex-reply`.
+- ChatGPT UI -> bridge `codex_run` succeeded in read-only mode; Codex read `README.md` and `package.json`, summarized scripts, and reported no file modifications.
+- ChatGPT UI -> bridge `codex_reply` succeeded for thread `019ed6c2-f060-72b0-849c-d7025fee873d`; it returned package name `codex-gpt-bridge`, version `0.1.0`, and reported no file modifications.
+- After adding annotations and restarting the bridge, SDK listTools showed all three tools with `readOnlyHint:true`, `destructiveHint:false`, and `openWorldHint:false`.
+- ChatGPT app metadata Refresh succeeded. ChatGPT Developer Mode now labels `bridge_status`, `codex_run`, and `codex_reply` as `Read`; old `PUBLIC WRITE`, `Open world`, `Destructive`, and `Poor Description` warnings disappeared. Remaining warning: `Output schema recommended`.
 - `git status --short` had no output after read-only smoke tests.
 
 ## Current Runtime
 
-- A local dev server may still be running in this Codex session on `http://127.0.0.1:8876/mcp`.
+- Temporary localhost bridge server has been stopped. `curl http://127.0.0.1:8876/healthz` now fails to connect.
+- Temporary Cloudflare quick tunnel has been stopped. The tunnel host now returns Cloudflare 1033, so the public no-auth endpoint is no longer reachable.
 - Default port `8765` returned `EADDRINUSE` during this test. `lsof` did not show a listener at the moment checked, so treat that as a transient or hidden-port state and prefer an explicit fallback port if it recurs.
 
 ## Changed Files
@@ -65,14 +83,19 @@ Current clarified goal: determine and run the best bridge for two directions:
 - `test/chatgptMcp.test.ts` added tool registration/request-shaping/missing-key tests.
 - `package.json` added `codex-chatgpt-mcp` bin and `chatgpt:mcp` script.
 - `README.md` documented both directions and the boundary that Codex-to-model is API-backed, not ChatGPT web UI.
+- `src/config.ts` added `CODEX_GPT_BRIDGE_ALLOWED_HOSTS`.
+- `src/server.ts` passes `allowedHosts` and `host` to `createMcpExpressApp`.
+- `src/tools.ts` adds safer descriptions and MCP tool annotations.
+- `test/config.test.ts` covers allowed host parsing.
+- `test/tools.test.ts` covers read-only/write-enabled tool annotations.
 - `TASK_STATE.md` updated with the current verification.
 
 ## Next Step
 
 Next step:
 
-1. Set `OPENAI_API_KEY` in the Codex app environment, then open a fresh Codex thread in this project and call the `chatgpt.ask_chatgpt` MCP tool.
-2. To finish ChatGPT UI -> Codex, install/configure Secure MCP Tunnel, ngrok, or Cloudflare Tunnel, start `codex-gpt-bridge`, expose `/mcp` over HTTPS, and configure the ChatGPT Developer Mode app.
+1. Stop the temporary Cloudflare tunnel and localhost bridge when the smoke test is complete.
+2. Commit and push the tunnel-host/annotation/docs updates.
 
 ## Cautions
 

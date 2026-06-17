@@ -17,8 +17,15 @@ export function registerBridgeTools(
     "bridge_status",
     {
       title: "Bridge Status",
-      description: "Inspect bridge policy, allowed roots, and upstream Codex MCP availability.",
-      inputSchema: {}
+      description:
+        "Read-only status check. Returns bridge safety policy, allowed local roots, tracked session count, and upstream Codex MCP tool availability. Does not start Codex and does not read project files.",
+      inputSchema: {},
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
     },
     async () => {
       const tools = await upstream.listTools();
@@ -41,7 +48,7 @@ export function registerBridgeTools(
     {
       title: "Run Codex",
       description:
-        "Start a local Codex session in an allowed working directory. Defaults to read-only sandbox.",
+        "Start a local Codex session in an allowed working directory. The bridge enforces the configured sandbox, allowed roots, approval policy, and sensitive-file preflight before forwarding to Codex.",
       inputSchema: {
         prompt: z.string().min(1).describe("Task prompt for Codex."),
         cwd: z.string().min(1).describe("Absolute working directory inside the configured allowed roots."),
@@ -53,7 +60,8 @@ export function registerBridgeTools(
           .max(30 * 60 * 1000)
           .optional()
           .describe("Request timeout in milliseconds.")
-      }
+      },
+      annotations: codexToolAnnotations(config)
     },
     async (args) => {
       const cwd = requireAllowedCwd(args.cwd, config.allowedRoots);
@@ -90,7 +98,8 @@ export function registerBridgeTools(
     "codex_reply",
     {
       title: "Reply To Codex",
-      description: "Continue a Codex MCP session returned by codex_run.",
+      description:
+        "Continue a Codex session that was first created through this bridge. The bridge rejects unknown thread ids and reruns sensitive-file preflight before forwarding.",
       inputSchema: {
         threadId: z.string().min(1).describe("Thread id returned by codex_run."),
         prompt: z.string().min(1).describe("Follow-up prompt for the same Codex session."),
@@ -101,7 +110,8 @@ export function registerBridgeTools(
           .max(30 * 60 * 1000)
           .optional()
           .describe("Request timeout in milliseconds.")
-      }
+      },
+      annotations: codexToolAnnotations(config)
     },
     async (args) => {
       const session = sessions.get(args.threadId);
@@ -128,6 +138,20 @@ export function registerBridgeTools(
       );
     }
   );
+}
+
+function codexToolAnnotations(config: BridgeConfig) {
+  const readOnly =
+    config.defaultSandbox === "read-only" &&
+    !config.allowWorkspaceWrite &&
+    !config.allowDangerFullAccess;
+
+  return {
+    readOnlyHint: readOnly,
+    destructiveHint: config.allowDangerFullAccess,
+    idempotentHint: false,
+    openWorldHint: false
+  };
 }
 
 function forwardResult(result: ToolResult): ToolResult {

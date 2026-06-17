@@ -106,6 +106,20 @@ npm run start
 
 Use `Authorization: Bearer <token>` from your MCP client.
 
+When exposing a localhost server through an HTTPS tunnel, keep the bridge bound to
+`127.0.0.1` and explicitly allow the tunnel host so the MCP SDK DNS-rebinding
+protection accepts the forwarded `Host` header:
+
+```bash
+CODEX_GPT_BRIDGE_ALLOWED_HOSTS=127.0.0.1,localhost,your-tunnel.example.com \
+CODEX_GPT_BRIDGE_NO_AUTH=1 \
+CODEX_GPT_BRIDGE_ROOTS="/Users/me/project" \
+npm run start
+```
+
+Use no-auth only for short-lived localhost/tunnel smoke tests. For durable use,
+put OAuth or a trusted auth proxy in front of the bridge.
+
 ## ChatGPT connection
 
 For ChatGPT Apps/GPTs, expose the local MCP endpoint with one of:
@@ -117,6 +131,15 @@ For ChatGPT Apps/GPTs, expose the local MCP endpoint with one of:
 Then configure the ChatGPT app/connector MCP URL to the HTTPS `/mcp` endpoint. Keep the bridge bound to local host where possible and put the tunnel on top.
 
 Built-in bearer-token auth is intended for local development, manual MCP clients, or a trusted proxy. Production ChatGPT Apps that require protected-tool auth should put an OAuth 2.1 / PKCE layer in front of this bridge; OAuth is not implemented in v0.1.
+
+Observed ChatGPT Developer Mode flow:
+
+1. Open ChatGPT Settings -> Apps -> Create app.
+2. Use Server URL.
+3. Set MCP Server URL to the tunnel HTTPS `/mcp` endpoint.
+4. Set Authentication to No Auth for local smoke tests.
+5. Accept the custom MCP server risk warning and create/connect the app.
+6. In a chat, mention the app and ask it to call `bridge_status`, `codex_run`, or `codex_reply`.
 
 ## Tools exposed to ChatGPT
 
