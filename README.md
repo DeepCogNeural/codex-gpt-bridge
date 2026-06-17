@@ -118,6 +118,26 @@ Then in ChatGPT:
 @Local Codex Bridge Secure 调用 codex_run，只传 prompt：在当前 allowed root 内修改我的简历。先检查相关文件，说明计划，然后执行最小改动并运行可用检查。
 ```
 
+For iterative review/edit loops, keep each tool call narrow:
+
+1. `codex_read`: ask Codex to inspect the file and return a concrete edit plan.
+2. `codex_run`: ask Codex to apply one narrow edit set. Do not ask it to compile, run long shell commands, or do broad cleanup inside the same bridge call.
+3. Verify locally from Codex or your terminal: compile, render, run tests, and inspect the diff.
+4. `codex_read`: send the updated file back through ChatGPT for review.
+5. Repeat only if ChatGPT returns a real blocker.
+
+Stable edit prompt:
+
+```text
+@Local Codex Bridge Secure 调用 codex_run，只传 prompt：只修改当前 allowed root 内的 <file>。按上一轮建议做最小改动；不要编译、不要运行 shell、不要改其他文件。完成后只总结改了什么。
+```
+
+Stable final review prompt:
+
+```text
+@Local Codex Bridge Secure 调用 codex_read，只传 prompt：只读复查 <file> 是否已经解决上一轮 blocker；不要修改、不要编译、不要运行 shell。只输出 status: PASS/NEEDS_CHANGES、blockers、notes。
+```
+
 One-time secure setup needs:
 
 ```bash

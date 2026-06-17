@@ -96,8 +96,10 @@ Use the ChatGPT app mention every time:
 3. 返回 `status=running` 时，复制完整 `jobId`，下一条 prompt 显式调用 `codex_job_status`。
 4. 如果 ChatGPT 自动把上一次工具结果里的 `jobId` 继续传参被安全层拦截，不要反复要求“继续”。改成手动粘贴 exact `jobId`。
 5. 只有明确需要修改文件时，才重启 write-mode bridge，并用 `codex_run`。
-6. 如果 ChatGPT 说没有 `codex_read`，去 Settings -> Apps -> Local Codex Bridge Secure -> Refresh，再新开 chat。
-7. 如果出现 `502 Upstream or external service errors`，先检查是否还在用旧同步工具/schema；刷新 app，并确认本地 schema 里有 `codex_job_status`。
+6. `codex_run` 的 prompt 要窄：只改指定文件/范围；不要让 Bridge 里的 Codex 同时编译、跑长命令或做大清理。
+7. 编译、测试、渲染和最终 diff 检查由本地 Codex/terminal 做，再把结果交给 ChatGPT 复查。
+8. 如果 ChatGPT 说没有 `codex_read`，去 Settings -> Apps -> Local Codex Bridge Secure -> Refresh，再新开 chat。
+9. 如果出现 `502 Upstream or external service errors`，先检查是否还在用旧同步工具/schema；刷新 app，并确认本地 schema 里有 `codex_job_status`。
 
 Status check:
 
@@ -252,6 +254,23 @@ Then ask ChatGPT to call Codex normally:
 
 ```text
 @Local Codex Bridge Secure 调用 codex_run，只传 prompt：在当前 allowed root 内修改我的简历。先检查相关文件，说明计划，然后执行最小改动并运行可用检查。如果返回 status=running 和 jobId，继续调用 codex_job_status 直到 completed 或 failed。
+```
+
+For daily feedback loops, split planning, writing, and verification:
+
+```text
+@Local Codex Bridge Secure 调用 codex_read，只传 prompt：只读审查 <file>，给出最多 3 个必须修改的 blocker 和精确修改建议；不要修改文件。
+```
+
+```text
+@Local Codex Bridge Secure 调用 codex_run，只传 prompt：只修改 <file>，按上一轮建议做最小改动；不要编译、不要运行 shell、不要改其他文件。完成后只总结改了什么。
+```
+
+Then compile or test locally outside the ChatGPT bridge. Send the updated file
+back to ChatGPT only for review:
+
+```text
+@Local Codex Bridge Secure 调用 codex_read，只传 prompt：只读复查 <file> 是否还有 blocker；不要修改、不要编译、不要运行 shell。只输出 status: PASS/NEEDS_CHANGES、blockers、notes。
 ```
 
 This bridge does not expose `danger-full-access` as a per-call ChatGPT option.
