@@ -9,6 +9,41 @@ Plain meaning:
 
 Important boundary: the Codex -> model direction does not call the ChatGPT web UI or ChatGPT private product backend. It uses the official OpenAI API, so it needs `OPENAI_API_KEY` and API model access.
 
+## Easiest ChatGPT -> Codex use
+
+Yes, this is MCP. ChatGPT sees `Local Codex Bridge` as an app with three MCP tools:
+
+- `bridge_status`
+- `codex_run`
+- `codex_reply`
+
+Temporary one-command path:
+
+```bash
+cd /Users/linghao/Github/codex-gpt-bridge
+npm run bridge:chatgpt
+```
+
+Then paste the printed `https://...trycloudflare.com/mcp` URL into ChatGPT Settings -> Apps -> Local Codex Bridge -> Manage, set Authentication to `No Auth`, and click Refresh.
+
+If Cloudflare returns a temporary hostname that does not resolve, the script retries. Treat this as a smoke-test path, not the daily workflow.
+
+Daily ChatGPT prompt:
+
+```text
+@Local Codex Bridge 在 /Users/linghao/Github/codex-gpt-bridge 里只读检查 package.json，总结 scripts。
+```
+
+Best long-term path is OpenAI Secure MCP Tunnel:
+
+```bash
+export CONTROL_PLANE_API_KEY="sk-..."
+export CONTROL_PLANE_TUNNEL_ID="tunnel_..."
+npm run bridge:chatgpt:secure
+```
+
+Then ChatGPT uses Connection = `Tunnel`, so you do not need to paste a new Cloudflare URL every run.
+
 ## Why
 
 Codex already ships a stdio MCP server with two useful tools:
