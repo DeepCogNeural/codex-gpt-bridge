@@ -4,7 +4,8 @@
   "description": "A safe Streamable HTTP MCP bridge from ChatGPT/GPTs to local Codex.",
   "type": "module",
   "bin": {
-    "codex-gpt-bridge": "dist/cli.js"
+    "codex-gpt-bridge": "dist/cli.js",
+    "codex-chatgpt-mcp": "dist/chatgpt-cli.js"
   },
   "files": [
     "dist",
@@ -13,6 +14,7 @@
   ],
   "scripts": {
     "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.json",
+    "chatgpt:mcp": "node dist/chatgpt-cli.js",
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
     "test": "vitest run",
