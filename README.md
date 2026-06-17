@@ -1,8 +1,13 @@
 # codex-gpt-bridge
 
-Small Streamable HTTP MCP bridge from ChatGPT/GPTs to local Codex.
+Small MCP bridge project for both directions between ChatGPT/OpenAI models and local Codex.
 
-Plain meaning: ChatGPT can act as the planner, while this local server forwards only scoped execution requests to the official `codex mcp-server` running on your machine.
+Plain meaning:
+
+- ChatGPT -> Codex: ChatGPT can act as the planner, while this local HTTP MCP server forwards only scoped execution requests to the official `codex mcp-server` running on your machine.
+- Codex -> ChatGPT-like model: Codex can call a local stdio MCP server named `chatgpt`, which forwards explicit prompts to the official OpenAI Responses API.
+
+Important boundary: the Codex -> model direction does not call the ChatGPT web UI or ChatGPT private product backend. It uses the official OpenAI API, so it needs `OPENAI_API_KEY` and API model access.
 
 ## Why
 
@@ -12,6 +17,8 @@ Codex already ships a stdio MCP server with two useful tools:
 - `codex-reply`: continue a Codex session by thread id.
 
 ChatGPT Apps/GPTs need an HTTP-accessible MCP endpoint. This project is the small missing adapter: HTTP MCP in, official Codex MCP out, with local safety policy in the middle.
+
+For the other direction, Codex can already connect to stdio MCP servers. This project adds `codex-chatgpt-mcp`, a small MCP server exposing one tool, `ask_chatgpt`, backed by the OpenAI Responses API.
 
 ## Safety defaults
 
@@ -38,6 +45,39 @@ Codex CLI must be installed and logged in:
 codex --version
 codex mcp-server --help
 ```
+
+## Codex -> ChatGPT-like model
+
+Set an OpenAI API key first:
+
+```bash
+export OPENAI_API_KEY="sk-..."
+export CODEX_CHATGPT_MODEL="gpt-5.5"
+```
+
+This repository includes a project-scoped Codex MCP config at `.codex/config.toml`:
+
+```toml
+[mcp_servers.chatgpt]
+command = "npm"
+args = ["run", "chatgpt:mcp"]
+env_vars = ["OPENAI_API_KEY", "OPENAI_BASE_URL", "CODEX_CHATGPT_MODEL", "CODEX_CHATGPT_TIMEOUT_MS"]
+```
+
+After opening a fresh Codex thread for this trusted project, Codex should have a `chatgpt` MCP server with one tool:
+
+- `ask_chatgpt`: send an explicit prompt to the configured OpenAI API model and return text. Optional `reasoningEffort` values for the default `gpt-5.5` model are `none`, `low`, `medium`, `high`, and `xhigh`.
+
+Manual smoke test without real API access:
+
+```bash
+npm run build
+node dist/chatgpt-cli.js
+```
+
+The server runs over stdio and waits for MCP JSON-RPC messages. The automated test suite verifies tool registration and request shaping without calling the real API.
+
+Prefer the project config above because `env_vars` forwards `OPENAI_API_KEY` from the running Codex environment without writing the secret into a config file. If you move this MCP config outside the project, add an absolute `cwd` that points to this repository before using `npm run chatgpt:mcp`.
 
 ## Run locally
 

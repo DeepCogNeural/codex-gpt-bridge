@@ -1,0 +1,9 @@
+[mcp_servers.chatgpt]
+command = "npm"
+args = ["run", "chatgpt:mcp"]
+env_vars = [
+  "OPENAI_API_KEY",
+  "OPENAI_BASE_URL",
+  "CODEX_CHATGPT_MODEL",
+  "CODEX_CHATGPT_TIMEOUT_MS"
+]
