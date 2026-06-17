@@ -11,16 +11,17 @@ Current clarified goal: determine and run the best bridge for two directions:
 
 ## Current Status
 
-- Valid as of: 2026-06-17 14:10:00 EDT.
+- Valid as of: 2026-06-17 15:35:00 EDT.
 - Repository: `https://github.com/DeepCogNeural/codex-gpt-bridge`.
 - Branch: `main`.
-- Latest pushed commit for this state update: `Add one-command ChatGPT bridge launcher`.
+- Previous pushed commit before this state update: `Add one-command ChatGPT bridge launcher`.
 - Current testing policy: read-only only; do not enable `workspace-write` or `danger-full-access`.
 - User authorized completing the ChatGPT Developer Mode connector setup without further confirmation. Keep public no-auth tunnel use short-lived and read-only.
-- Update valid as of 2026-06-17 14:50 EDT: user wants the least-annoying ChatGPT UI -> local Codex workflow. This project is an MCP bridge. ChatGPT cannot directly call `localhost`; it needs either OpenAI Secure MCP Tunnel or an HTTPS tunnel.
-- Best daily path is OpenAI Secure MCP Tunnel. `tunnel-client` is installed at `/Users/linghao/.local/bin/tunnel-client` and reports version `0.0.9+62b9b42f698ec5319d2115e0c0ff1dcf6557d7ae`.
-- OpenAI Platform tunnel setup is blocked at Google account selection in Chrome. The tab is left open for user handoff because choosing a specific Google account is an account-authorization action.
-- Temporary Cloudflare quick tunnel is unreliable today: multiple generated `trycloudflare.com` names did not resolve in DNS. The launcher now retries and reports the real last error.
+- Update valid as of 2026-06-17 15:30 EDT: user wants the least-annoying ChatGPT UI -> local Codex workflow. The daily path is OpenAI Secure MCP Tunnel plus a macOS LaunchAgent; Cloudflare quick tunnel is no longer the recommended path.
+- `tunnel-client` is installed at `/Users/linghao/.local/bin/tunnel-client` and reports version `0.0.9+62b9b42f698ec5319d2115e0c0ff1dcf6557d7ae`.
+- OpenAI Platform tunnel setup is complete for tunnel `tunnel_6a32ef1f53e48191b094c12162632f4c`, named `codex-gpt-bridge-local`, associated with the user's ChatGPT workspace.
+- Runtime credentials are stored in macOS Keychain under `codex-gpt-bridge:control-plane-api-key` and `codex-gpt-bridge:control-plane-tunnel-id`; no secret is written into the repository.
+- ChatGPT Developer Mode app `Local Codex Bridge Secure` is created and connected with Connection = Tunnel, Authentication = No Auth.
 
 ## Facts
 
@@ -43,7 +44,7 @@ Current clarified goal: determine and run the best bridge for two directions:
 - Local stdio MCP smoke using `npm run chatgpt:mcp` returned tool list `ask_chatgpt`; with no `OPENAI_API_KEY`, the tool returned the expected missing-key error.
 - `ask_chatgpt` `reasoningEffort` is constrained for the default `gpt-5.5` path to `none`, `low`, `medium`, `high`, and `xhigh`; tests cover `xhigh` pass-through and reject `minimal`.
 - Local ChatGPT-to-Codex HTTP MCP smoke passed after the Codex-to-model addition: `/healthz` returned 200, tools were `bridge_status,codex_run,codex_reply`, and `bridge_status` saw upstream `codex`/`codex-reply`.
-- No `OPENAI_API_KEY`, `AGENT_ACCESS_TOKEN`, `CODEX_GPT_BRIDGE_TOKEN`, `ngrok`, `cloudflared`, or Secure MCP Tunnel client is available in the current shell.
+- Earlier pre-install shell checks did not have a Secure MCP Tunnel client available; this is now resolved by `/Users/linghao/.local/bin/tunnel-client`.
 - Local bridge started successfully on fallback port `8876`:
   - `CODEX_GPT_BRIDGE_NO_AUTH=1`
   - `CODEX_GPT_BRIDGE_ROOTS=/Users/linghao/Github/codex-gpt-bridge`
@@ -77,14 +78,21 @@ Current clarified goal: determine and run the best bridge for two directions:
 - Manual Cloudflare quick tunnel smoke passed once on port `8900` when the bridge was started with the exact generated tunnel host in `CODEX_GPT_BRIDGE_ALLOWED_HOSTS`; `/healthz` returned 200 and MCP SDK listed `bridge_status,codex_run,codex_reply`.
 - One-command quick launcher retries were tested on port `8903`; all 3 Cloudflare attempts failed because their generated `trycloudflare.com` DNS names did not resolve. This validates the new retry/error reporting but confirms quick tunnel is not suitable as the daily path on the current network.
 - `npm run check` passed on 2026-06-17 after adding the one-command ChatGPT launcher: TypeScript build plus 21 Vitest tests.
+- `npm run check` passed on 2026-06-17 after adding Secure Tunnel no-auth doctor tolerance and OAuth probe JSON response: TypeScript build plus 22 Vitest tests.
+- `npm run bridge:chatgpt:secure:keychain` started successfully from Keychain. `tunnel-client doctor` still reports `oauth_metadata` failure for this No Auth server, but the launcher continues because `mcp_server_reachable` passes and the tunnel reaches the MCP server.
+- macOS LaunchAgent `/Users/linghao/Library/LaunchAgents/com.linghao.codex-gpt-bridge.secure.plist` is loaded and running. `curl http://127.0.0.1:8876/healthz` returns `{"ok":true,"name":"codex-gpt-bridge"}`.
+- ChatGPT UI Secure Tunnel smoke passed:
+  - `@Local Codex Bridge Secure` called `bridge_status` and returned allowed root `/Users/linghao/Github/codex-gpt-bridge`, `read-only`, no write/danger permission, and upstream tools `codex,codex-reply`.
+  - `@Local Codex Bridge Secure` called `codex_run` in `read-only` mode. Codex read `package.json`, returned package name `codex-gpt-bridge`, version `0.1.0`, script names, and reported no file modifications.
 
 ## Current Runtime
 
-- Temporary localhost bridge server has been stopped. `curl http://127.0.0.1:8876/healthz` now fails to connect.
-- Temporary Cloudflare quick tunnel has been stopped. The tunnel host now returns Cloudflare 1033, so the public no-auth endpoint is no longer reachable.
+- Secure LaunchAgent is intentionally running and owns the local bridge on `127.0.0.1:8876`.
+- `tunnel-client run --profile codex-gpt-bridge` is running under the LaunchAgent, forwarding the local MCP server through OpenAI Secure MCP Tunnel.
+- Temporary Cloudflare quick tunnel has been stopped. The old Cloudflare URL should not be used.
 - Default port `8765` returned `EADDRINUSE` during this test. `lsof` did not show a listener at the moment checked, so treat that as a transient or hidden-port state and prefer an explicit fallback port if it recurs.
-- No bridge or Cloudflare tunnel process from the latest launcher smoke tests is intentionally left running.
-- Chrome has an OpenAI/Google account chooser tab left open for Secure MCP Tunnel setup handoff.
+- No Cloudflare tunnel process from the latest launcher smoke tests is intentionally left running.
+- Chrome ChatGPT test conversation is open at `https://chatgpt.com/c/6a32f2af-036c-83ea-9343-ffda5e25cec1` with successful `bridge_status` and `codex_run` proof.
 
 ## Changed Files
 
@@ -99,19 +107,21 @@ Current clarified goal: determine and run the best bridge for two directions:
 - `test/config.test.ts` covers allowed host parsing.
 - `test/tools.test.ts` covers read-only/write-enabled tool annotations.
 - `scripts/start-chatgpt-codex-bridge.mjs` added a one-command launcher for local, quick Cloudflare tunnel, and OpenAI Secure MCP Tunnel modes.
+- `scripts/start-chatgpt-codex-bridge.mjs` now tolerates the expected `oauth_metadata` doctor failure for this No Auth Secure Tunnel setup when the MCP server reachability check passes.
+- `scripts/start-secure-from-keychain.sh` starts secure mode by reading the tunnel id and runtime API key from macOS Keychain.
+- `src/server.ts` returns JSON for OAuth protected-resource metadata probes in the No Auth tunnel setup.
 - `package.json` added `bridge:chatgpt`, `bridge:chatgpt:local`, and `bridge:chatgpt:secure` scripts.
+- `package.json` added `bridge:chatgpt:secure:keychain`.
 - `docs/chatgpt-setup.md`, `docs/security.md`, and `README.md` document the MCP setup, quick fallback, and Secure MCP Tunnel daily path.
 - `TASK_STATE.md` updated with the current verification.
 
 ## Next Step
 
-Next step:
+Daily use:
 
-1. User selects the intended Google account in the kept Chrome OpenAI Platform login tab.
-2. Create/copy an OpenAI Secure MCP Tunnel id and a runtime API key with Tunnels Read + Use.
-3. Run `CONTROL_PLANE_API_KEY=... CONTROL_PLANE_TUNNEL_ID=... npm run bridge:chatgpt:secure`.
-4. In ChatGPT Settings -> Apps -> Local Codex Bridge -> Manage, set Connection = Tunnel and Refresh.
-5. After the tunnel is connected, verify from ChatGPT UI with `@Local Codex Bridge 调用 bridge_status`.
+1. Ensure the LaunchAgent is running: `launchctl print gui/$(id -u)/com.linghao.codex-gpt-bridge.secure`.
+2. In ChatGPT, use `@Local Codex Bridge Secure ...`.
+3. Start with `bridge_status`; use `codex_run` with `sandbox=read-only` until write mode is explicitly needed.
 
 ## Cautions
 

@@ -34,6 +34,17 @@ describe("http server", () => {
     expect(await response.json()).toMatchObject({ ok: true });
   });
 
+  it("returns JSON for OAuth metadata probes in no-auth tunnel mode", async () => {
+    const baseUrl = await start({
+      CODEX_GPT_BRIDGE_NO_AUTH: "1"
+    });
+
+    const response = await fetch(`${baseUrl}/.well-known/oauth-protected-resource/mcp`);
+    expect(response.status).toBe(404);
+    expect(response.headers.get("content-type")).toContain("application/json");
+    expect(await response.json()).toMatchObject({ error: "oauth_metadata_not_configured" });
+  });
+
   it("requires bearer token on /mcp when configured", async () => {
     const baseUrl = await start({
       CODEX_GPT_BRIDGE_TOKEN: "secret"

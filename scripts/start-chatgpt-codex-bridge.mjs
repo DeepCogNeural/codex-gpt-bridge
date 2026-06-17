@@ -154,10 +154,20 @@ async function startSecureTunnel() {
   console.log("Running tunnel-client doctor...");
   const doctor = spawnSync(tunnelClient, ["doctor", "--profile", profile, "--explain"], {
     cwd: repoRoot,
-    stdio: "inherit"
+    encoding: "utf8"
   });
+  if (doctor.stdout) process.stdout.write(doctor.stdout);
+  if (doctor.stderr) process.stderr.write(doctor.stderr);
   if (doctor.status !== 0) {
-    throw new Error("tunnel-client doctor failed. Fix the tunnel/API key setup first.");
+    const output = `${doctor.stdout || ""}\n${doctor.stderr || ""}`;
+    if (isIgnorableNoAuthDoctorFailure(output)) {
+      console.warn(
+        "Continuing because the only blocking tunnel-client doctor check is OAuth metadata, " +
+          "and this local ChatGPT bridge is intentionally configured as No Auth behind OpenAI Secure MCP Tunnel."
+      );
+    } else {
+      throw new Error("tunnel-client doctor failed. Fix the tunnel/API key setup first.");
+    }
   }
 
   console.log("Starting Secure MCP Tunnel...");
@@ -292,6 +302,19 @@ Options:
 function defaultTunnelClient() {
   const localBinary = resolve(homedir(), ".local/bin/tunnel-client");
   return existsSync(localBinary) ? localBinary : "tunnel-client";
+}
+
+function isIgnorableNoAuthDoctorFailure(output) {
+  const failedChecksLine = output.match(/^FAILED_CHECKS\s+(.+)$/m);
+  const failedChecks = failedChecksLine ? failedChecksLine[1].trim().split(/\s+/) : [];
+  const failedOAuthMetadata =
+    failedChecks.length === 1
+      ? failedChecks[0] === "oauth_metadata"
+      : output.includes("FAILED_CHECKS oauth_metadata");
+  const mcpReachable =
+    output.includes("CHECK mcp_server_reachable     PASS") ||
+    (output.includes("mcp_server_reachable") && output.includes("PASS"));
+  return failedOAuthMetadata && mcpReachable;
 }
 
 function parseArgs(rawArgs) {

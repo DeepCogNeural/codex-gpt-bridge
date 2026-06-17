@@ -6,23 +6,31 @@ MCP means Model Context Protocol: ChatGPT calls tools exposed by an MCP server. 
 
 Yes, this is an MCP app for ChatGPT.
 
-The convenient path is:
+The daily path is:
 
 ```text
-ChatGPT UI -> Local Codex Bridge MCP -> local Codex MCP server -> Codex execution
+ChatGPT UI -> OpenAI Secure MCP Tunnel -> Local Codex Bridge MCP -> local Codex MCP server -> Codex execution
 ```
 
 Daily use after setup:
 
-```bash
-cd /Users/linghao/Github/codex-gpt-bridge
-npm run bridge:chatgpt
+```text
+@Local Codex Bridge Secure 在 /Users/linghao/Github/codex-gpt-bridge 里只读检查 package.json，总结 scripts。
 ```
 
-Then in ChatGPT:
+If the macOS LaunchAgent is installed, there is no terminal step. If you want to
+run it manually instead:
+
+```bash
+cd /Users/linghao/Github/codex-gpt-bridge
+npm run bridge:chatgpt:secure:keychain
+```
+
+The Keychain-backed launcher reads:
 
 ```text
-@Local Codex Bridge 在 /Users/linghao/Github/codex-gpt-bridge 里只读检查 package.json，总结 scripts。
+codex-gpt-bridge:control-plane-api-key
+codex-gpt-bridge:control-plane-tunnel-id
 ```
 
 ## Best long-term setup
@@ -35,28 +43,48 @@ One-time setup needs:
 - `CONTROL_PLANE_API_KEY` with Tunnels Read + Use.
 - `tunnel-client` installed locally.
 
-Run:
+Store the runtime values in macOS Keychain:
 
 ```bash
-export CONTROL_PLANE_API_KEY="sk-..."
-export CONTROL_PLANE_TUNNEL_ID="tunnel_..."
-
-cd /Users/linghao/Github/codex-gpt-bridge
-npm run bridge:chatgpt:secure
+security add-generic-password -a "$USER" -s "codex-gpt-bridge:control-plane-api-key" -w "<runtime-api-key>" -U
+security add-generic-password -a "$USER" -s "codex-gpt-bridge:control-plane-tunnel-id" -w "tunnel_..." -U
 ```
 
-In ChatGPT Settings -> Apps -> Local Codex Bridge -> Manage:
+Run manually:
+
+```bash
+cd /Users/linghao/Github/codex-gpt-bridge
+npm run bridge:chatgpt:secure:keychain
+```
+
+Or install a LaunchAgent that calls `scripts/start-secure-from-keychain.sh`.
+The local service should report:
+
+```bash
+curl http://127.0.0.1:8876/healthz
+```
+
+In ChatGPT Settings -> Apps -> Create app:
 
 - Connection: `Tunnel`
 - Tunnel: choose/paste your `tunnel_...`
 - Authentication: `No Auth`
-- Click `Refresh`
+- Click `Create`, then `Connect`
 
-After that, keep `npm run bridge:chatgpt:secure` running while you use ChatGPT.
+After connecting, `bridge_status` should show read-only policy and upstream
+Codex tools `codex,codex-reply`.
+
+Useful local service checks:
+
+```bash
+launchctl print gui/$(id -u)/com.linghao.codex-gpt-bridge.secure
+tail -n 80 ~/Library/Logs/codex-gpt-bridge-secure.log
+tail -n 80 ~/Library/Logs/codex-gpt-bridge-secure.err.log
+```
 
 ## Easy temporary setup
 
-If Secure MCP Tunnel is not available on your account yet, use the one-command quick tunnel:
+If Secure MCP Tunnel is not available on your account yet, use the one-command quick tunnel only as a temporary smoke test:
 
 ```bash
 cd /Users/linghao/Github/codex-gpt-bridge
