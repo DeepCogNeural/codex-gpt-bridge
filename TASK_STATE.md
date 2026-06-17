@@ -9,6 +9,19 @@ Current clarified goal: determine and run the best bridge for two directions:
 1. Primary: Codex calls ChatGPT without Computer Use, ideally as an MCP-like tool or other stable programmatic connector.
 2. Fallback: ChatGPT calls Codex through the existing MCP bridge, using the user's multi-dialog Superpower workflow.
 
+## Latest Update
+
+- Valid as of: 2026-06-17 16:52 EDT.
+- Screenshot failure root cause: the Secure MCP Tunnel control plane has an about-30s request deadline. A synchronous `codex_run` can keep running locally after ChatGPT has already returned `502 Upstream or external service errors`.
+- Fix implemented: Codex calls now fast-return before the tunnel deadline with `status=running` + `jobId`; results can be fetched with `codex_job_status`.
+- Daily read-only entry is now `codex_read`, not `codex_run`. `codex_read` forces Codex `read-only` and exposes no sandbox field, which avoids ChatGPT treating normal repo inspection as a write-capable tool.
+- Default read-only `codex_run` schema now exposes only `sandbox=read-only`; `workspace-write` appears only when the bridge owner starts write mode.
+- ChatGPT UI test after app Refresh passed:
+  - `codex_read` started through `@Local Codex Bridge Secure` with only `prompt`.
+  - It returned `status=running` and jobId `bf593488-db67-4158-8d11-1e75bf2527cb`, with no 502 and no file modification.
+  - A precise user-authored `codex_job_status` prompt for that jobId succeeded and later returned `completed` with the expected repo summary.
+- Important limitation: ChatGPT UI may block fully automatic chained polling when it tries to feed a jobId from one tool result into `codex_job_status` without the user explicitly restating the jobId. The practical workaround is to paste the exact jobId into the next prompt, or let Codex/local tooling query `codex_job_status` directly.
+
 ## Current Status
 
 - Valid as of: 2026-06-17 16:05:30 EDT.
@@ -35,7 +48,7 @@ Current clarified goal: determine and run the best bridge for two directions:
 
 - Local Codex CLI is `codex-cli 0.134.0`.
 - `codex mcp-server` is available and exposes upstream tools `codex` and `codex-reply`.
-- Bridge tools exposed over HTTP MCP: `bridge_status`, `codex_run`, `codex_reply`.
+- Bridge tools exposed over HTTP MCP: `bridge_status`, `codex_read`, `codex_run`, `codex_reply`, `codex_job_status`.
 - Codex-to-model path now exists as project-scoped stdio MCP server `chatgpt`, exposing `ask_chatgpt`.
 - `ask_chatgpt` calls the official OpenAI Responses API. It is not the ChatGPT web UI and not a private ChatGPT product backend.
 - `OPENAI_API_KEY` is required for real `ask_chatgpt` calls. It is forwarded through `.codex/config.toml` `env_vars`, not written into the repo.
