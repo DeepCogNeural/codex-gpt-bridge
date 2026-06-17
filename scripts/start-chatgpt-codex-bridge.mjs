@@ -95,9 +95,9 @@ async function startQuickTunnel() {
       console.log(`${tunnelUrl}/mcp`);
       console.log("");
       console.log("Use in ChatGPT:");
-      console.log("1. Settings -> Apps -> Local Codex Bridge -> Manage");
+      console.log("1. Settings -> Apps -> Local Codex Bridge Secure -> Manage");
       console.log("2. Set Server URL to the MCP URL above, Authentication = No Auth, then Refresh");
-      console.log("3. In a chat: @Local Codex Bridge 调用 bridge_status");
+      console.log("3. In a chat: @Local Codex Bridge Secure 调用 bridge_status");
       console.log("");
       console.log("This quick tunnel is temporary. Press Ctrl-C here to close the public endpoint.");
 
@@ -175,10 +175,10 @@ async function startSecureTunnel() {
 
   console.log("");
   console.log("Use in ChatGPT:");
-  console.log("1. Settings -> Apps -> Local Codex Bridge -> Manage");
+  console.log("1. Settings -> Apps -> Local Codex Bridge Secure -> Manage");
   console.log(`2. Connection = Tunnel, select/paste tunnel id: ${tunnelId}`);
   console.log("3. Authentication = No Auth, then Refresh");
-  console.log("4. In a chat: @Local Codex Bridge 调用 bridge_status");
+  console.log("4. In a chat: @Local Codex Bridge Secure 调用 bridge_status");
   console.log("");
   console.log("Keep this process running while ChatGPT uses local Codex.");
 

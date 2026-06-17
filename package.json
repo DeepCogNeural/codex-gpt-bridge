@@ -18,6 +18,7 @@
     "bridge:chatgpt:local": "node scripts/start-chatgpt-codex-bridge.mjs --mode local",
     "bridge:chatgpt:secure": "node scripts/start-chatgpt-codex-bridge.mjs --mode secure",
     "bridge:chatgpt:secure:keychain": "zsh scripts/start-secure-from-keychain.sh",
+    "bridge:chatgpt:secure:write:keychain": "zsh scripts/start-secure-from-keychain.sh --write",
     "chatgpt:mcp": "node dist/chatgpt-cli.js",
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
