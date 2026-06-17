@@ -87,6 +87,54 @@ Use the ChatGPT app mention every time:
 @Local Codex Bridge Secure ...
 ```
 
+## Advisor/reviewer workflow
+
+Use ChatGPT as a senior advisor and independent reviewer. Do not use it as a
+second shell or as the place that runs compile/test/render work.
+
+The stable division of labor is:
+
+1. ChatGPT plans: call `codex_read` so ChatGPT can inspect local context, then ask it for repo facts, plan, risks, success checks, and exact Codex instructions.
+2. Codex executes: local Codex or write-mode `codex_run` makes narrow edits. Tests, compile, render, and diff inspection happen locally outside the bridge.
+3. ChatGPT reviews: call `codex_read` again and ask for `PASS` or concrete blockers only.
+4. Codex fixes blockers: repeat only when the reviewer reports a real blocker.
+
+Planning prompt:
+
+```text
+@Local Codex Bridge Secure 调用 codex_read，只传 prompt：你是这个项目的顶层 advisor。只读调查当前 allowed root，先列出和任务相关的 repo facts，然后给出整体方案、执行顺序、风险、验收标准，以及可以交给 Codex 执行的下一步指令；不要修改任何文件。
+```
+
+Execution handoff prompt for Codex:
+
+```text
+按 ChatGPT advisor 的计划执行。只做 next_instruction_for_codex 指定的范围；改完后运行本地验证，检查 diff，并记录结果。
+```
+
+Review prompt:
+
+```text
+@Local Codex Bridge Secure 调用 codex_read，只传 prompt：你是独立 critical reviewer。只读复查当前改动是否满足计划；不要修改、不要编译、不要运行 shell。只输出 status: PASS/NEEDS_CHANGES、blockers、evidence、next_instruction_for_codex。
+```
+
+Good reviewer output should be short:
+
+```text
+status: PASS
+blockers: none
+evidence: <files or facts reviewed>
+next_instruction_for_codex: none
+```
+
+or:
+
+```text
+status: NEEDS_CHANGES
+blockers: <1-3 concrete issues>
+evidence: <why this is a blocker>
+next_instruction_for_codex: <one narrow fix instruction>
+```
+
 ## Agent contract
 
 后续 agent 必须按这个顺序调用，不要猜参数：

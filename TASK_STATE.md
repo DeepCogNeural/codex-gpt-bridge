@@ -11,6 +11,12 @@ Current clarified goal: determine and run the best bridge for two directions:
 
 ## Latest Update
 
+- Valid as of: 2026-06-17 18:02 EDT.
+- User clarified the intended role of external ChatGPT in the bridge workflow: ChatGPT should be the top-level advisor/architect before execution and the independent critical reviewer after execution; local Codex remains the executor and verifier.
+- `README.md` now documents this role contract plus copyable advisor and reviewer prompts.
+- `docs/chatgpt-setup.md` now documents the daily advisor/reviewer workflow, including planning prompt, Codex execution handoff, review prompt, and expected `PASS` / `NEEDS_CHANGES` output shape.
+- Verification: `git diff --check` passed, and `npm run check` passed with TypeScript build plus 4 Vitest files / 35 tests.
+
 - Valid as of: 2026-06-17 17:20 EDT.
 - Real ChatGPT UI -> Local Codex Bridge Secure -> local Codex feedback loop passed on a clean worktree for the user's Uniswap research statement:
   - `codex_read` produced a focused AMM/execution-quality revision plan.

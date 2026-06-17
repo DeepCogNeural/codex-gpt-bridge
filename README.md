@@ -19,6 +19,30 @@ Yes, this is MCP. ChatGPT sees `Local Codex Bridge Secure` as an app with five M
 - `codex_reply`
 - `codex_job_status`
 
+### ChatGPT role: advisor and reviewer
+
+Treat external ChatGPT as the top-level advisor, not as the local executor.
+Its two best jobs are:
+
+1. Before execution: inspect enough repo context through `codex_read`, then write the plan, risks, work order, and success checks.
+2. After execution: act as an independent critical reviewer. It should read the changed files or diff through `codex_read` and return `PASS` or concrete blockers.
+
+Local Codex is still responsible for execution: editing files, running tests,
+compiling, rendering, inspecting diffs, and committing. Keep ChatGPT tool calls
+narrow so it can reason well and so the bridge stays stable.
+
+Advisor prompt:
+
+```text
+@Local Codex Bridge Secure 调用 codex_read，只传 prompt：你是这个项目的顶层 advisor。只读调查当前 allowed root，先列出和任务相关的 repo facts，然后给出整体方案、执行顺序、风险、验收标准，以及可以交给 Codex 执行的下一步指令；不要修改任何文件。
+```
+
+Reviewer prompt:
+
+```text
+@Local Codex Bridge Secure 调用 codex_read，只传 prompt：你是独立 critical reviewer。只读复查当前改动是否满足计划；不要修改、不要编译、不要运行 shell。只输出 status: PASS/NEEDS_CHANGES、blockers、evidence、next_instruction_for_codex。
+```
+
 Best daily path is OpenAI Secure MCP Tunnel. After the one-time setup, keep the
 local daemon running with the Keychain-backed launcher:
 
