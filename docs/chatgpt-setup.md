@@ -15,7 +15,7 @@ ChatGPT UI -> OpenAI Secure MCP Tunnel -> Local Codex Bridge MCP -> local Codex 
 Daily use after setup:
 
 ```text
-@Local Codex Bridge Secure 调用 codex_run：调查当前 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。
+@Local Codex Bridge Secure 调用 codex_run，只传 prompt：调查当前 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。
 ```
 
 If the macOS LaunchAgent is installed, there is no terminal step. If you want to
@@ -96,7 +96,7 @@ Status check:
 Ask Codex to inspect the current repo, then let ChatGPT answer:
 
 ```text
-@Local Codex Bridge Secure 调用 codex_run：调查当前 allowed root 的顶层文件和目录，说明每个重要文件的用途；不要修改任何文件。最后用简洁中文总结给我。
+@Local Codex Bridge Secure 调用 codex_run，只传 prompt：调查当前 allowed root 的顶层文件和目录，说明每个重要文件的用途；不要修改任何文件。最后用简洁中文总结给我。
 ```
 
 Continue after the first run returns a `threadId`:
@@ -219,7 +219,7 @@ CODEX_GPT_BRIDGE_ROOT="/absolute/path/to/repo" npm run bridge:chatgpt:secure:wri
 Then ask ChatGPT to call Codex normally:
 
 ```text
-@Local Codex Bridge Secure 调用 codex_run：在当前 allowed root 内修改我的简历。先检查相关文件，说明计划，然后执行最小改动并运行可用检查。
+@Local Codex Bridge Secure 调用 codex_run，只传 prompt：在当前 allowed root 内修改我的简历。先检查相关文件，说明计划，然后执行最小改动并运行可用检查。
 ```
 
 This bridge does not expose `danger-full-access` as a per-call ChatGPT option.

@@ -31,7 +31,7 @@ If this is installed as a macOS LaunchAgent, there is no terminal step. Use
 ChatGPT directly:
 
 ```text
-@Local Codex Bridge Secure 调用 codex_run：调查当前 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。
+@Local Codex Bridge Secure 调用 codex_run，只传 prompt：调查当前 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。
 ```
 
 ### Prompt templates
@@ -50,7 +50,7 @@ Status check:
 Inspect files in a repo:
 
 ```text
-@Local Codex Bridge Secure 调用 codex_run：调查当前 allowed root 的顶层文件和目录，说明每个重要文件的用途；不要修改任何文件。
+@Local Codex Bridge Secure 调用 codex_run，只传 prompt：调查当前 allowed root 的顶层文件和目录，说明每个重要文件的用途；不要修改任何文件。
 ```
 
 Continue the same Codex thread after `codex_run` returns a `threadId`:
@@ -77,7 +77,7 @@ CODEX_GPT_BRIDGE_ROOT="/absolute/path/to/project" npm run bridge:chatgpt:secure:
 Then in ChatGPT:
 
 ```text
-@Local Codex Bridge Secure 调用 codex_run：在当前 allowed root 内修改我的简历。先检查相关文件，说明计划，然后执行最小改动并运行可用检查。
+@Local Codex Bridge Secure 调用 codex_run，只传 prompt：在当前 allowed root 内修改我的简历。先检查相关文件，说明计划，然后执行最小改动并运行可用检查。
 ```
 
 One-time secure setup needs:
