@@ -35,6 +35,16 @@ export function createHttpServer(config: BridgeConfig, upstream: CodexUpstream):
   });
   const sessions = new SessionRegistry();
 
+  app.get(
+    ["/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/mcp"],
+    (_req: Request, res: Response) => {
+      res.status(404).json({
+        error: "oauth_metadata_not_configured",
+        message: "This local bridge runs with No Auth when it is behind OpenAI Secure MCP Tunnel."
+      });
+    }
+  );
+
   app.get("/healthz", (_req: Request, res: Response) => {
     res.json({
       ok: true,

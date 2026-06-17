@@ -35,6 +35,11 @@ Bearer-token auth is not a production ChatGPT Apps auth implementation. If your 
 
 Prefer OpenAI Secure MCP Tunnel for regular use. It keeps the local MCP server private and uses an outbound-only `tunnel-client` connection to OpenAI. Cloudflare quick tunnel is acceptable only for short read-only smoke tests because the public URL is unauthenticated in the simple ChatGPT `No Auth` setup.
 
+Store the tunnel runtime API key outside the repository, for example in macOS
+Keychain. If the OpenAI Platform UI does not expose a narrow `Tunnels Read + Use`
+runtime-key permission, treat any broader Admin key as temporary and rotate it
+when a narrower key is available.
+
 ## Remaining risk
 
 Any bridge from ChatGPT to a local coding agent can cause local actions if you enable write mode. Keep the allowed roots narrow, inspect Codex output, and prefer read-only until the task truly needs edits.
