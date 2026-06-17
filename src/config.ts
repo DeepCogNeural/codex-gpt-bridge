@@ -80,6 +80,16 @@ export function requireAllowedCwd(input: string, allowedRoots: string[]): string
   return cwd;
 }
 
+export function resolveAllowedCwd(input: string | undefined, allowedRoots: string[]): string {
+  if (input) {
+    return requireAllowedCwd(input, allowedRoots);
+  }
+  if (allowedRoots.length === 1) {
+    return allowedRoots[0];
+  }
+  throw new Error("cwd is required when multiple CODEX_GPT_BRIDGE_ROOTS are configured.");
+}
+
 export function enforceSandbox(config: BridgeConfig, requested?: SandboxMode): SandboxMode {
   const sandbox = requested || config.defaultSandbox;
   if (sandbox === "workspace-write" && !config.allowWorkspaceWrite) {

@@ -1,11 +1,11 @@
 import * as z from "zod/v4";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { BridgeConfig, SandboxMode } from "./config.js";
-import { enforceSandbox, findSensitiveFiles, requireAllowedCwd } from "./config.js";
+import { enforceSandbox, findSensitiveFiles, resolveAllowedCwd } from "./config.js";
 import type { CodexUpstream, ToolResult } from "./upstream.js";
 import { extractThreadId, SessionRegistry } from "./sessionRegistry.js";
 
-const sandboxSchema = z.enum(["read-only", "workspace-write", "danger-full-access"]);
+const sandboxSchema = z.enum(["read-only", "workspace-write"]);
 
 export function registerBridgeTools(
   server: McpServer,
@@ -36,6 +36,7 @@ export function registerBridgeTools(
         defaultSandbox: config.defaultSandbox,
         allowWorkspaceWrite: config.allowWorkspaceWrite,
         allowDangerFullAccess: config.allowDangerFullAccess,
+        defaultCwd: config.allowedRoots.length === 1 ? config.allowedRoots[0] : null,
         defaultApprovalPolicy: config.defaultApprovalPolicy,
         trackedSessions: sessions.size(),
         upstreamTools: tools
@@ -48,10 +49,14 @@ export function registerBridgeTools(
     {
       title: "Run Codex",
       description:
-        "Start a local Codex session in an allowed working directory. The bridge enforces the configured sandbox, allowed roots, approval policy, and sensitive-file preflight before forwarding to Codex.",
+        "Start a local Codex session in an allowed working directory. If the bridge has exactly one allowed root, cwd may be omitted and that root is used. The bridge enforces the configured sandbox, allowed roots, approval policy, and sensitive-file preflight before forwarding to Codex.",
       inputSchema: {
         prompt: z.string().min(1).describe("Task prompt for Codex."),
-        cwd: z.string().min(1).describe("Absolute working directory inside the configured allowed roots."),
+        cwd: z
+          .string()
+          .min(1)
+          .optional()
+          .describe("Absolute working directory inside the configured allowed roots. Defaults to the only allowed root."),
         sandbox: sandboxSchema.optional().describe("Codex sandbox mode. Defaults to bridge policy."),
         timeoutMs: z
           .number()
@@ -64,7 +69,7 @@ export function registerBridgeTools(
       annotations: codexToolAnnotations(config)
     },
     async (args) => {
-      const cwd = requireAllowedCwd(args.cwd, config.allowedRoots);
+      const cwd = resolveAllowedCwd(args.cwd, config.allowedRoots);
       if (config.secretScan) {
         const sensitiveFiles = findSensitiveFiles(cwd);
         if (sensitiveFiles.length > 0) {
@@ -74,6 +79,7 @@ export function registerBridgeTools(
         }
       }
       const sandbox = enforceSandbox(config, args.sandbox as SandboxMode | undefined);
+      rejectDangerSandbox(sandbox);
       const payload: Record<string, unknown> = {
         prompt: args.prompt,
         cwd,
@@ -140,6 +146,12 @@ export function registerBridgeTools(
   );
 }
 
+function rejectDangerSandbox(sandbox: SandboxMode): void {
+  if (sandbox === "danger-full-access") {
+    throw new Error("danger-full-access is not exposed through ChatGPT bridge tools.");
+  }
+}
+
 function codexToolAnnotations(config: BridgeConfig) {
   const readOnly =
     config.defaultSandbox === "read-only" &&
@@ -148,7 +160,7 @@ function codexToolAnnotations(config: BridgeConfig) {
 
   return {
     readOnlyHint: readOnly,
-    destructiveHint: config.allowDangerFullAccess,
+    destructiveHint: config.allowWorkspaceWrite || config.allowDangerFullAccess,
     idempotentHint: false,
     openWorldHint: false
   };

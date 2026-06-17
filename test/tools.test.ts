@@ -83,9 +83,95 @@ describe("bridge tools", () => {
 
     expect(codexRun?.annotations).toMatchObject({
       readOnlyHint: false,
-      destructiveHint: false,
+      destructiveHint: true,
       openWorldHint: false
     });
+
+    await close();
+  });
+
+  it("reports default cwd when only one root is configured", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "bridge-root-"));
+    const upstream = new FakeUpstream();
+    const config = loadConfig({
+      CODEX_GPT_BRIDGE_NO_AUTH: "1",
+      CODEX_GPT_BRIDGE_ROOTS: root
+    });
+    const { client, close } = await connectTestClient(config, upstream);
+
+    const result = await client.callTool({
+      name: "bridge_status",
+      arguments: {}
+    });
+    const status = JSON.parse((result.content as Array<{ text: string }>)[0]?.text);
+
+    expect(status.defaultCwd).toBe(realpathSync(root));
+
+    await close();
+  });
+
+  it("reports null default cwd when multiple roots are configured", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "bridge-root-"));
+    const other = mkdtempSync(path.join(tmpdir(), "bridge-other-"));
+    const upstream = new FakeUpstream();
+    const config = loadConfig({
+      CODEX_GPT_BRIDGE_NO_AUTH: "1",
+      CODEX_GPT_BRIDGE_ROOTS: `${root},${other}`
+    });
+    const { client, close } = await connectTestClient(config, upstream);
+
+    const result = await client.callTool({
+      name: "bridge_status",
+      arguments: {}
+    });
+    const status = JSON.parse((result.content as Array<{ text: string }>)[0]?.text);
+
+    expect(status.defaultCwd).toBeNull();
+
+    await close();
+  });
+
+  it("does not expose danger-full-access as a per-call sandbox option", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "bridge-root-"));
+    const upstream = new FakeUpstream();
+    const config = loadConfig({
+      CODEX_GPT_BRIDGE_NO_AUTH: "1",
+      CODEX_GPT_BRIDGE_ROOTS: root
+    });
+    const { client, close } = await connectTestClient(config, upstream);
+
+    const tools = await client.listTools();
+    const codexRun = tools.tools.find((tool) => tool.name === "codex_run");
+    const inputSchema = codexRun?.inputSchema as
+      | { properties?: { sandbox?: { enum?: string[] } } }
+      | undefined;
+
+    expect(inputSchema?.properties?.sandbox?.enum).toEqual(["read-only", "workspace-write"]);
+
+    await close();
+  });
+
+  it("rejects danger-full-access even when configured as the bridge default", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "bridge-root-"));
+    const upstream = new FakeUpstream();
+    const config = loadConfig({
+      CODEX_GPT_BRIDGE_NO_AUTH: "1",
+      CODEX_GPT_BRIDGE_ROOTS: root,
+      CODEX_GPT_BRIDGE_ALLOW_DANGER: "1",
+      CODEX_GPT_BRIDGE_DEFAULT_SANDBOX: "danger-full-access"
+    });
+    const { client, close } = await connectTestClient(config, upstream);
+
+    const result = await client.callTool({
+      name: "codex_run",
+      arguments: {
+        prompt: "summarize this repo"
+      }
+    });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result)).toContain("danger-full-access is not exposed");
+    expect(upstream.calls).toHaveLength(0);
 
     await close();
   });
@@ -118,6 +204,60 @@ describe("bridge tools", () => {
         "approval-policy": "never"
       }
     });
+
+    await close();
+  });
+
+  it("defaults codex_run cwd to the only allowed root", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "bridge-root-"));
+    const upstream = new FakeUpstream();
+    const config = loadConfig({
+      CODEX_GPT_BRIDGE_NO_AUTH: "1",
+      CODEX_GPT_BRIDGE_ROOTS: root
+    });
+    const { client, close } = await connectTestClient(config, upstream);
+
+    await client.callTool({
+      name: "codex_run",
+      arguments: {
+        prompt: "summarize this repo"
+      }
+    });
+
+    expect(upstream.calls).toHaveLength(1);
+    expect(upstream.calls[0]).toMatchObject({
+      name: "codex",
+      args: {
+        prompt: "summarize this repo",
+        cwd: realpathSync(root),
+        sandbox: "read-only",
+        "approval-policy": "never"
+      }
+    });
+
+    await close();
+  });
+
+  it("requires codex_run cwd when multiple roots are configured", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "bridge-root-"));
+    const other = mkdtempSync(path.join(tmpdir(), "bridge-other-"));
+    const upstream = new FakeUpstream();
+    const config = loadConfig({
+      CODEX_GPT_BRIDGE_NO_AUTH: "1",
+      CODEX_GPT_BRIDGE_ROOTS: `${root},${other}`
+    });
+    const { client, close } = await connectTestClient(config, upstream);
+
+    const result = await client.callTool({
+      name: "codex_run",
+      arguments: {
+        prompt: "summarize this repo"
+      }
+    });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result)).toContain("cwd is required");
+    expect(upstream.calls).toHaveLength(0);
 
     await close();
   });

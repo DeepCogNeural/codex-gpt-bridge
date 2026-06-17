@@ -21,35 +21,36 @@ Best daily path is OpenAI Secure MCP Tunnel. After the one-time setup, keep the
 local daemon running with the Keychain-backed launcher:
 
 ```bash
-cd /Users/linghao/Github/codex-gpt-bridge
+cd /path/to/codex-gpt-bridge
 npm run bridge:chatgpt:secure:keychain
 ```
+
+Replace `/path/to/...` examples with your own absolute local paths.
 
 If this is installed as a macOS LaunchAgent, there is no terminal step. Use
 ChatGPT directly:
 
 ```text
-@Local Codex Bridge Secure 在 /Users/linghao/Github/codex-gpt-bridge 里只读检查 package.json，总结 scripts。
+@Local Codex Bridge Secure 调用 codex_run：调查当前 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。
 ```
 
 ### Prompt templates
 
-Always include three things: the app name, the absolute `cwd`, and the sandbox.
-Start with `read-only`.
+Usually you only need the app name and the task. If the bridge has exactly one
+allowed root, `codex_run` uses that root automatically. The sandbox also defaults
+to the bridge policy, which is `read-only` unless you start the bridge in write
+mode.
 
 Status check:
 
 ```text
-@Local Codex Bridge Secure 调用 bridge_status。只返回 allowedRoots、defaultSandbox、allowWorkspaceWrite、allowDangerFullAccess、upstreamTools。
+@Local Codex Bridge Secure 调用 bridge_status。只返回 allowedRoots、defaultCwd、defaultSandbox、allowWorkspaceWrite、allowDangerFullAccess、upstreamTools。
 ```
 
 Inspect files in a repo:
 
 ```text
-@Local Codex Bridge Secure 调用 codex_run：
-cwd=/Users/linghao/Github/codex-gpt-bridge
-sandbox=read-only
-prompt=调查这个 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。
+@Local Codex Bridge Secure 调用 codex_run：调查当前 allowed root 的顶层文件和目录，说明每个重要文件的用途；不要修改任何文件。
 ```
 
 Continue the same Codex thread after `codex_run` returns a `threadId`:
@@ -58,6 +59,25 @@ Continue the same Codex thread after `codex_run` returns a `threadId`:
 @Local Codex Bridge Secure 调用 codex_reply：
 threadId=<thread id from previous codex_run>
 prompt=继续上一轮，只读检查 README.md 和 docs/chatgpt-setup.md 是否解释清楚日常用法；不要修改任何文件。
+```
+
+For a different project, restart the bridge with that repo as the only allowed
+root:
+
+```bash
+CODEX_GPT_BRIDGE_ROOT="/absolute/path/to/project" npm run bridge:chatgpt:secure:keychain
+```
+
+For edits, keep the root narrow and start write mode only for the target repo:
+
+```bash
+CODEX_GPT_BRIDGE_ROOT="/absolute/path/to/project" npm run bridge:chatgpt:secure:write:keychain
+```
+
+Then in ChatGPT:
+
+```text
+@Local Codex Bridge Secure 调用 codex_run：在当前 allowed root 内修改我的简历。先检查相关文件，说明计划，然后执行最小改动并运行可用检查。
 ```
 
 One-time secure setup needs:
@@ -94,7 +114,7 @@ For the other direction, Codex can already connect to stdio MCP servers. This pr
 - Blocks delegation when sensitive-looking files such as `.env`, private keys, or `.pem` files are present under the requested working directory.
 - Allows `codex_reply` only for threads first created through this bridge, and reruns the sensitive-file preflight before continuing them.
 - Blocks `workspace-write` unless `CODEX_GPT_BRIDGE_ALLOW_WRITE=1`.
-- Blocks `danger-full-access` unless `CODEX_GPT_BRIDGE_ALLOW_DANGER=1`.
+- Does not expose `danger-full-access` as a per-call ChatGPT option.
 
 ## Install
 
@@ -218,11 +238,11 @@ Starts a Codex session in an allowed working directory.
 Required:
 
 - `prompt`
-- `cwd`
 
 Optional:
 
-- `sandbox`: `read-only`, `workspace-write`, or `danger-full-access`
+- `cwd`: defaults to the only configured allowed root; required when multiple roots are configured.
+- `sandbox`: `read-only` or `workspace-write`
 - `timeoutMs`
 
 Approval policy is owner-controlled through `CODEX_GPT_BRIDGE_APPROVAL_POLICY`; callers cannot lower it per request.

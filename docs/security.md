@@ -17,7 +17,7 @@ This bridge is intentionally smaller than a general remote-control daemon.
 - Change Codex config through an arbitrary `config` object.
 - Start `codex_run` when common sensitive files are present under `cwd`, unless secret scanning is explicitly disabled.
 - Use `workspace-write` unless the bridge owner explicitly enables it.
-- Use `danger-full-access` unless the bridge owner explicitly enables it.
+- Request `danger-full-access` as a per-call ChatGPT option.
 
 ## Defaults
 

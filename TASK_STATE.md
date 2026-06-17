@@ -11,7 +11,7 @@ Current clarified goal: determine and run the best bridge for two directions:
 
 ## Current Status
 
-- Valid as of: 2026-06-17 15:35:00 EDT.
+- Valid as of: 2026-06-17 15:58:41 EDT.
 - Repository: `https://github.com/DeepCogNeural/codex-gpt-bridge`.
 - Branch: `main`.
 - Previous pushed commit before this state update: `Add one-command ChatGPT bridge launcher`.
@@ -22,6 +22,12 @@ Current clarified goal: determine and run the best bridge for two directions:
 - OpenAI Platform tunnel setup is complete for tunnel `tunnel_6a32ef1f53e48191b094c12162632f4c`, named `codex-gpt-bridge-local`, associated with the user's ChatGPT workspace.
 - Runtime credentials are stored in macOS Keychain under `codex-gpt-bridge:control-plane-api-key` and `codex-gpt-bridge:control-plane-tunnel-id`; no secret is written into the repository.
 - ChatGPT Developer Mode app `Local Codex Bridge Secure` is created and connected with Connection = Tunnel, Authentication = No Auth.
+- Use `Local Codex Bridge Secure` for daily work. The older Cloudflare-backed ChatGPT app `Local Codex Bridge` has been disconnected in ChatGPT Settings; the UI did not expose a physical Delete button.
+- `codex_run.cwd` now defaults to the only configured allowed root, so daily ChatGPT prompts no longer need to repeat `cwd` or `sandbox` when the bridge has one allowed root.
+- Write mode remains opt-in. Use `npm run bridge:chatgpt:secure:write:keychain` with a narrow `CODEX_GPT_BRIDGE_ROOT` only for tasks that should edit files.
+- `bridge_status` now reports `defaultCwd` when the bridge has exactly one allowed root.
+- ChatGPT can no longer request `danger-full-access` as a per-call `codex_run.sandbox` option; exposed options are `read-only` and `workspace-write`. The tool layer also rejects `danger-full-access` if the owner accidentally configures it as the bridge default.
+- Write-enabled tool annotations now mark `codex_run`/`codex_reply` as potentially destructive because they can modify workspace files.
 
 ## Facts
 
@@ -79,6 +85,7 @@ Current clarified goal: determine and run the best bridge for two directions:
 - One-command quick launcher retries were tested on port `8903`; all 3 Cloudflare attempts failed because their generated `trycloudflare.com` DNS names did not resolve. This validates the new retry/error reporting but confirms quick tunnel is not suitable as the daily path on the current network.
 - `npm run check` passed on 2026-06-17 after adding the one-command ChatGPT launcher: TypeScript build plus 21 Vitest tests.
 - `npm run check` passed on 2026-06-17 after adding Secure Tunnel no-auth doctor tolerance and OAuth probe JSON response: TypeScript build plus 22 Vitest tests.
+- `npm run check` passed on 2026-06-17 after making `codex_run.cwd` optional for single-root bridge configs, adding the secure write-mode launcher, exposing `defaultCwd`, and rejecting ChatGPT-side `danger-full-access`: TypeScript build plus 28 Vitest tests.
 - `npm run bridge:chatgpt:secure:keychain` started successfully from Keychain. `tunnel-client doctor` still reports `oauth_metadata` failure for this No Auth server, but the launcher continues because `mcp_server_reachable` passes and the tunnel reaches the MCP server.
 - macOS LaunchAgent `/Users/linghao/Library/LaunchAgents/com.linghao.codex-gpt-bridge.secure.plist` is loaded and running. `curl http://127.0.0.1:8876/healthz` returns `{"ok":true,"name":"codex-gpt-bridge"}`.
 - ChatGPT UI Secure Tunnel smoke passed:
@@ -112,6 +119,11 @@ Current clarified goal: determine and run the best bridge for two directions:
 - `src/server.ts` returns JSON for OAuth protected-resource metadata probes in the No Auth tunnel setup.
 - `package.json` added `bridge:chatgpt`, `bridge:chatgpt:local`, and `bridge:chatgpt:secure` scripts.
 - `package.json` added `bridge:chatgpt:secure:keychain`.
+- `package.json` added `bridge:chatgpt:secure:write:keychain`.
+- `src/config.ts` and `src/tools.ts` now allow `codex_run` to omit `cwd` when exactly one allowed root is configured.
+- `src/tools.ts` now reports `defaultCwd`, limits per-call sandbox options to `read-only`/`workspace-write`, rejects `danger-full-access`, and marks write-enabled tools as destructive.
+- `test/tools.test.ts` covers default single-root `cwd` behavior, the multiple-root rejection path and error text, single-root/multi-root `defaultCwd`, and the rejection of ChatGPT-side `danger-full-access`.
+- `README.md`, `docs/chatgpt-setup.md`, and `docs/security.md` now document shorter daily prompts, per-project roots, opt-in write mode, port differences, path replacement, and the no per-call danger boundary.
 - `docs/chatgpt-setup.md`, `docs/security.md`, and `README.md` document the MCP setup, quick fallback, and Secure MCP Tunnel daily path.
 - `TASK_STATE.md` updated with the current verification.
 
@@ -121,7 +133,9 @@ Daily use:
 
 1. Ensure the LaunchAgent is running: `launchctl print gui/$(id -u)/com.linghao.codex-gpt-bridge.secure`.
 2. In ChatGPT, use `@Local Codex Bridge Secure ...`.
-3. Start with `bridge_status`; use `codex_run` with `sandbox=read-only` until write mode is explicitly needed.
+3. Start with `bridge_status`; then use `codex_run` with only a prompt when the bridge has one allowed root.
+4. For another project, restart the bridge with `CODEX_GPT_BRIDGE_ROOT="/absolute/path/to/project"`.
+5. For edits, use the write-mode launcher only on a narrow target repo.
 
 ## Cautions
 

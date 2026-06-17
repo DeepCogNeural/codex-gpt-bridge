@@ -15,16 +15,18 @@ ChatGPT UI -> OpenAI Secure MCP Tunnel -> Local Codex Bridge MCP -> local Codex 
 Daily use after setup:
 
 ```text
-@Local Codex Bridge Secure 在 /Users/linghao/Github/codex-gpt-bridge 里只读检查 package.json，总结 scripts。
+@Local Codex Bridge Secure 调用 codex_run：调查当前 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。
 ```
 
 If the macOS LaunchAgent is installed, there is no terminal step. If you want to
 run it manually instead:
 
 ```bash
-cd /Users/linghao/Github/codex-gpt-bridge
+cd /path/to/codex-gpt-bridge
 npm run bridge:chatgpt:secure:keychain
 ```
+
+Replace `/path/to/...` examples with your own absolute local paths.
 
 The Keychain-backed launcher reads:
 
@@ -53,7 +55,7 @@ security add-generic-password -a "$USER" -s "codex-gpt-bridge:control-plane-tunn
 Run manually:
 
 ```bash
-cd /Users/linghao/Github/codex-gpt-bridge
+cd /path/to/codex-gpt-bridge
 npm run bridge:chatgpt:secure:keychain
 ```
 
@@ -63,6 +65,9 @@ The local service should report:
 ```bash
 curl http://127.0.0.1:8876/healthz
 ```
+
+The base bridge CLI defaults to port `8765`. The ChatGPT helper scripts use
+`8876` to avoid clashing with local development runs.
 
 In ChatGPT Settings -> Apps -> Create app:
 
@@ -85,16 +90,13 @@ Use the ChatGPT app mention every time:
 Status check:
 
 ```text
-@Local Codex Bridge Secure 调用 bridge_status。只返回 allowedRoots、defaultSandbox、allowWorkspaceWrite、allowDangerFullAccess、upstreamTools。
+@Local Codex Bridge Secure 调用 bridge_status。只返回 allowedRoots、defaultCwd、defaultSandbox、allowWorkspaceWrite、allowDangerFullAccess、upstreamTools。
 ```
 
 Ask Codex to inspect the current repo, then let ChatGPT answer:
 
 ```text
-@Local Codex Bridge Secure 调用 codex_run：
-cwd=/Users/linghao/Github/codex-gpt-bridge
-sandbox=read-only
-prompt=调查这个 project 顶层有哪些文件和目录，说明每个重要文件的用途；不要修改任何文件。最后用简洁中文总结给我。
+@Local Codex Bridge Secure 调用 codex_run：调查当前 allowed root 的顶层文件和目录，说明每个重要文件的用途；不要修改任何文件。最后用简洁中文总结给我。
 ```
 
 Continue after the first run returns a `threadId`:
@@ -113,12 +115,19 @@ tail -n 80 ~/Library/Logs/codex-gpt-bridge-secure.log
 tail -n 80 ~/Library/Logs/codex-gpt-bridge-secure.err.log
 ```
 
+To use another repo, restart the secure bridge with that repo as the only
+allowed root:
+
+```bash
+CODEX_GPT_BRIDGE_ROOT="/absolute/path/to/project" npm run bridge:chatgpt:secure:keychain
+```
+
 ## Easy temporary setup
 
 If Secure MCP Tunnel is not available on your account yet, use the one-command quick tunnel only as a temporary smoke test:
 
 ```bash
-cd /Users/linghao/Github/codex-gpt-bridge
+cd /path/to/codex-gpt-bridge
 npm run bridge:chatgpt
 ```
 
@@ -130,7 +139,7 @@ It starts:
 
 Copy the printed `https://...trycloudflare.com/mcp` URL into ChatGPT:
 
-- Settings -> Apps -> Local Codex Bridge -> Manage
+- Settings -> Apps -> Local Codex Bridge Secure -> Manage
 - Server URL: printed `/mcp` URL
 - Authentication: `No Auth`
 - Refresh
@@ -180,15 +189,16 @@ Authorization: Bearer <CODEX_GPT_BRIDGE_TOKEN>
 
 Call `bridge_status` first. It proves ChatGPT reached this bridge and this bridge reached the local official `codex mcp-server`.
 
-Only then call `codex_run` with:
+Only then call `codex_run` with a prompt. If the bridge has exactly one allowed
+root, `cwd` is optional and defaults to that root:
 
 ```json
 {
-  "cwd": "/absolute/path/to/repo",
-  "prompt": "Inspect this repository and summarize the test command. Do not edit files.",
-  "sandbox": "read-only"
+  "prompt": "Inspect this repository and summarize the test command. Do not edit files."
 }
 ```
+
+If multiple roots are configured, pass the absolute `cwd` explicitly.
 
 If `codex_run` reports sensitive-looking files, move those files outside the allowed root or create a sanitized staging copy. Disabling the preflight is possible but should be treated as accepting that ChatGPT/Codex may read those local files.
 
@@ -200,12 +210,16 @@ Allowed roots only control which `cwd` values the bridge accepts. They are not a
 
 Write mode is intentionally off by default.
 
-To allow workspace edits inside allowed roots:
+To allow workspace edits inside one target repo:
 
 ```bash
-CODEX_GPT_BRIDGE_ALLOW_WRITE=1 \
-CODEX_GPT_BRIDGE_ROOTS="/absolute/path/to/repo" \
-codex-gpt-bridge
+CODEX_GPT_BRIDGE_ROOT="/absolute/path/to/repo" npm run bridge:chatgpt:secure:write:keychain
 ```
 
-Do not expose `danger-full-access` through a public tunnel unless you have an external sandbox and a clear reason.
+Then ask ChatGPT to call Codex normally:
+
+```text
+@Local Codex Bridge Secure 调用 codex_run：在当前 allowed root 内修改我的简历。先检查相关文件，说明计划，然后执行最小改动并运行可用检查。
+```
+
+This bridge does not expose `danger-full-access` as a per-call ChatGPT option.

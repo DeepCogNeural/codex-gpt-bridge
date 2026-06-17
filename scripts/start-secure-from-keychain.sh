@@ -23,4 +23,4 @@ if [[ -z "$NPM_BIN" ]]; then
 fi
 
 cd "$REPO_ROOT"
-exec "$NPM_BIN" run bridge:chatgpt:secure -- --root "$BRIDGE_ROOT" --no-build
+exec "$NPM_BIN" run bridge:chatgpt:secure -- --root "$BRIDGE_ROOT" --no-build "$@"
