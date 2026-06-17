@@ -21,6 +21,8 @@ Current clarified goal: determine and run the best bridge for two directions:
   - It returned `status=running` and jobId `bf593488-db67-4158-8d11-1e75bf2527cb`, with no 502 and no file modification.
   - A precise user-authored `codex_job_status` prompt for that jobId succeeded and later returned `completed` with the expected repo summary.
 - Important limitation: ChatGPT UI may block fully automatic chained polling when it tries to feed a jobId from one tool result into `codex_job_status` without the user explicitly restating the jobId. The practical workaround is to paste the exact jobId into the next prompt, or let Codex/local tooling query `codex_job_status` directly.
+- Fixed agent flow is now documented in both `README.md` and `docs/chatgpt-setup.md`: `bridge_status` -> `codex_read` with only `prompt` -> exact `codex_job_status` when running -> `codex_reply` only after a completed thread id -> `codex_run` only for explicit write mode.
+- Additional real local MCP smoke passed after the final docs/code update: `codex_read` through `http://127.0.0.1:8876/mcp` read `package.json` and returned package name `codex-gpt-bridge`, version `0.1.0`, with no file modifications.
 
 ## Current Status
 

@@ -42,6 +42,33 @@ Usually you only need the app name and the task. If the bridge has exactly one
 allowed root, `codex_read` uses that root automatically and always forces
 Codex `read-only`. Use `codex_run` only when you intentionally start write mode.
 
+### Fixed agent flow
+
+Use this flow exactly. Do not guess tool names or pass extra arguments.
+
+1. Confirm the app can reach the bridge:
+
+```text
+@Local Codex Bridge Secure 调用 bridge_status。只返回 allowedRoots、defaultCwd、defaultSandbox、allowWorkspaceWrite、allowDangerFullAccess、upstreamTools。
+```
+
+2. For read-only investigation, call `codex_read` and pass only `prompt`:
+
+```text
+@Local Codex Bridge Secure 调用 codex_read，只传 prompt：<your task>; 不要修改任何文件。
+```
+
+3. If the result contains `status=running`, copy the exact `jobId` and query it explicitly:
+
+```text
+@Local Codex Bridge Secure 调用 codex_job_status，只传 jobId：<exact jobId>
+```
+
+4. Use `codex_reply` only after a completed read/run returns a `threadId`.
+5. Use `codex_run` only for intentional write-mode work, after restarting the bridge with a narrow `CODEX_GPT_BRIDGE_ROOT`.
+6. If ChatGPT says automatic polling was blocked, do not retry the same vague instruction. Paste the exact `jobId`.
+7. If ChatGPT cannot see `codex_read`, refresh the app in ChatGPT Settings -> Apps -> Local Codex Bridge Secure -> Refresh, then start a new chat.
+
 Status check:
 
 ```text

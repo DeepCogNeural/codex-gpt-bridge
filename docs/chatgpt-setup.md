@@ -87,6 +87,18 @@ Use the ChatGPT app mention every time:
 @Local Codex Bridge Secure ...
 ```
 
+## Agent contract
+
+后续 agent 必须按这个顺序调用，不要猜参数：
+
+1. 先调 `bridge_status`，确认 `defaultCwd`、`defaultSandbox=read-only`、上游有 `codex,codex-reply`。
+2. 只读调查一律调 `codex_read`，只传 `prompt`。不要传 `cwd`、`sandbox`，除非 `bridge_status` 显示多个 allowed roots。
+3. 返回 `status=running` 时，复制完整 `jobId`，下一条 prompt 显式调用 `codex_job_status`。
+4. 如果 ChatGPT 自动把上一次工具结果里的 `jobId` 继续传参被安全层拦截，不要反复要求“继续”。改成手动粘贴 exact `jobId`。
+5. 只有明确需要修改文件时，才重启 write-mode bridge，并用 `codex_run`。
+6. 如果 ChatGPT 说没有 `codex_read`，去 Settings -> Apps -> Local Codex Bridge Secure -> Refresh，再新开 chat。
+7. 如果出现 `502 Upstream or external service errors`，先检查是否还在用旧同步工具/schema；刷新 app，并确认本地 schema 里有 `codex_job_status`。
+
 Status check:
 
 ```text
