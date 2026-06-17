@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="artifact-contract" content="artifact-report.v1">
+<meta name="artifact-id" content="chatgpt-codex-bridge-decision-2026-06-17">
+<link rel="icon" href="data:,">
+<title>ChatGPT 到 Codex 本地桥接决策报告</title>
+<style>
+  :root {
+    --ivory:#FAF9F5;
+    --slate:#141413;
+    --clay:#D97757;
+    --oat:#E3DACC;
+    --olive:#788C5D;
+    --gray-100:#F0EEE6;
+    --gray-300:#D1CFC5;
+    --gray-500:#87867F;
+    --gray-700:#3D3D3A;
+    --white:#FFFFFF;
+    --serif:ui-serif, Georgia, "Times New Roman", serif;
+    --sans:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono:ui-monospace, "SF Mono", Menlo, Monaco, monospace;
+    --border:1.5px solid var(--gray-300);
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0;
+    padding:56px 32px 120px;
+    background:var(--ivory);
+    color:var(--gray-700);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.62;
+  }
+  .page { max-width:1180px; margin:0 auto; }
+  header { margin-bottom:10px; }
+  .eyebrow { color:var(--gray-500); font-family:var(--mono); font-size:12px; letter-spacing:0; text-transform:uppercase; margin-bottom:12px; }
+  h1,h2,h3 { color:var(--slate); font-family:var(--serif); font-weight:500; line-height:1.12; }
+  h1 { margin:0 0 18px; font-size:38px; line-height:1.15; }
+  h2 { margin:0; font-size:26px; }
+  h3 { margin:0 0 8px; font-size:21px; }
+  p { margin:0 0 12px; }
+  code { background:var(--gray-100); border-radius:4px; color:var(--slate); font-family:var(--mono); font-size:.92em; padding:1px 5px; }
+  a { color:var(--clay); }
+  .prompt-box,.card,.table-wrap,details,.note-card,.diagram { background:var(--white); border:var(--border); border-radius:12px; }
+  .prompt-box { padding:16px 20px; font-size:14.5px; }
+  .tldr { background:var(--slate); border-radius:12px; color:var(--ivory); margin:10px 0 34px; padding:22px 26px; }
+  .summary { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:60px; }
+  .card { padding:18px 20px; }
+  .card.good { border-left:4px solid var(--olive); padding-left:17px; }
+  .card.warn { border-left:4px solid var(--clay); padding-left:17px; }
+  .k { color:var(--gray-500); font-family:var(--sans); font-size:11px; font-weight:700; letter-spacing:0; text-transform:uppercase; }
+  .v { color:var(--slate); font-size:18px; font-weight:700; margin-top:6px; }
+  section { margin-bottom:64px; scroll-margin-top:24px; }
+  .sec-head { display:flex; align-items:baseline; gap:14px; margin-bottom:8px; }
+  .num { background:var(--oat); border-radius:8px; color:var(--slate); font-family:var(--mono); font-size:12px; padding:3px 9px; }
+  .sec-intro { color:var(--gray-500); font-size:14.5px; margin:0 0 26px; max-width:760px; }
+  hr.rule { border:0; border-top:var(--border); margin:0 0 24px; }
+  .decision-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:22px; }
+  .note-card { padding:18px 20px; }
+  .note-card.good { border-left:4px solid var(--olive); padding-left:17px; }
+  .note-card.hot { border-left:4px solid var(--clay); padding-left:17px; }
+  .note-card p { margin:0; font-size:14px; }
+  .diagram { overflow-x:auto; padding:18px; margin-top:18px; }
+  .diagram text { font-family:var(--sans); }
+  .table-wrap { overflow-x:auto; }
+  table { border-collapse:collapse; min-width:840px; width:100%; }
+  th,td { border-bottom:1px solid var(--gray-300); padding:11px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--gray-100); color:var(--gray-700); font-size:12px; text-transform:uppercase; }
+  details { margin:14px 0; padding:14px 16px; }
+  summary { color:var(--clay); cursor:pointer; font-weight:700; }
+  pre { background:var(--slate); border-radius:10px; color:var(--ivory); overflow-x:auto; padding:14px 16px; white-space:pre-wrap; }
+  button[data-copy] { background:var(--slate); border:0; border-radius:7px; color:var(--ivory); cursor:pointer; font:700 12px var(--sans); padding:8px 10px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="eyebrow">codex-gpt-bridge · decision memo · 2026-06-17</div>
+    <h1>ChatGPT 到 Codex 本地桥接决策报告</h1>
+    <div class="prompt-box">目标：让 ChatGPT/GPTs 做规划和调研，通过 MCP 调用本机受控 Codex 执行器。MCP 指 Model Context Protocol，即模型调用外部工具的标准协议。</div>
+  </header>
+
+  <main>
+    <div class="tldr" data-component-id="cmp-tldr"><strong>TL;DR:</strong> 结论是新建小型 MIT 项目，不 fork ColaMeta。原因很简单：本机 Codex 已经有官方 <code>codex mcp-server</code>，我们只需要补一个 ChatGPT 可访问的 Streamable HTTP MCP 网关，并把启动目录、认证、session 和 sandbox 边界做窄。</div>
+
+    <div class="summary" aria-label="summary" data-component-id="cmp-summary">
+      <div class="card good"><div class="k">Decision</div><div class="v">Build Small</div></div>
+      <div class="card"><div class="k">Core Path</div><div class="v">HTTP MCP → Codex MCP</div></div>
+      <div class="card warn"><div class="k">Main Risk</div><div class="v">Local Write Access</div></div>
+      <div class="card"><div class="k">Verification</div><div class="v">15 tests + smoke</div></div>
+    </div>
+
+    <section data-section-id="decision">
+      <div class="sec-head"><div class="num">01</div><div><h2>Decision</h2></div></div>
+      <p class="sec-intro">本节给最终路线，不展开所有备选细节。</p>
+      <hr class="rule">
+      <div class="decision-grid" data-component-id="cmp-decision-notes">
+        <div class="note-card good">
+          <h3>Adopt Now</h3>
+          <p>发布 <code>codex-gpt-bridge</code>：TypeScript、MIT、只暴露 <code>bridge_status</code>、<code>codex_run</code>、<code>codex_reply</code> 三个工具。</p>
+        </div>
+        <div class="note-card hot">
+          <h3>Hold Back</h3>
+          <p>不直接 fork ColaMeta，不暴露原始 shell，不把 <code>codex app-server</code> 全量挂给 ChatGPT。</p>
+        </div>
+        <div class="note-card">
+          <h3>Revisit Later</h3>
+          <p>后续可加 preview/apply、OAuth、任务队列和 Web console；首版先验证真实桥接价值。</p>
+        </div>
+      </div>
+      <div class="diagram" data-component-id="cmp-flow">
+        <svg viewBox="0 0 900 180" role="img" aria-label="ChatGPT to local Codex bridge flow">
+          <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#D97757"></path></marker></defs>
+          <rect x="20" y="52" width="170" height="76" rx="10" fill="#FFFFFF" stroke="#D1CFC5"></rect>
+          <text x="44" y="82" font-size="16" font-weight="700">ChatGPT / GPTs</text>
+          <text x="44" y="105" font-size="13" fill="#87867F">planner and reviewer</text>
+          <line x1="190" y1="90" x2="285" y2="90" stroke="#D97757" stroke-width="2" marker-end="url(#arrow)"></line>
+          <rect x="288" y="52" width="190" height="76" rx="10" fill="#FFF7F3" stroke="#D97757"></rect>
+          <text x="312" y="82" font-size="16" font-weight="700">codex-gpt-bridge</text>
+          <text x="312" y="105" font-size="13" fill="#87867F">auth, cwd, session, sandbox</text>
+          <line x1="478" y1="90" x2="572" y2="90" stroke="#D97757" stroke-width="2" marker-end="url(#arrow)"></line>
+          <rect x="576" y="52" width="170" height="76" rx="10" fill="#FFFFFF" stroke="#D1CFC5"></rect>
+          <text x="600" y="82" font-size="16" font-weight="700">codex mcp-server</text>
+          <text x="600" y="105" font-size="13" fill="#87867F">official local executor</text>
+          <line x1="746" y1="90" x2="815" y2="90" stroke="#D97757" stroke-width="2" marker-end="url(#arrow)"></line>
+          <rect x="818" y="52" width="70" height="76" rx="10" fill="#FFFFFF" stroke="#D1CFC5"></rect>
+          <text x="836" y="82" font-size="16" font-weight="700">Repo</text>
+          <text x="833" y="105" font-size="13" fill="#87867F">scoped</text>
+        </svg>
+      </div>
+    </section>
+
+    <section data-section-id="evidence">
+      <div class="sec-head"><div class="num">02</div><div><h2>Evidence</h2></div></div>
+      <p class="sec-intro">关键证据来自官方文档、本机 Codex CLI、候选 GitHub 项目和本项目验证。</p>
+      <div class="table-wrap" data-component-id="cmp-candidate-table">
+        <table>
+          <thead><tr><th>候选</th><th>结论</th><th>理由</th></tr></thead>
+          <tbody>
+            <tr><td><code>riccilnl/colameta</code></td><td>高度相关，但不 fork</td><td>它覆盖 GPTs 到本地执行器、plan、preview/apply、Git 闭环；但 Alpha、体量大，且许可文本禁止商业使用。</td></tr>
+            <tr><td><code>tuannvm/codex-mcp-server</code></td><td>参考，不作为基础</td><td>成熟度较好，但目标是 Claude/编辑器调用 Codex，README 仍偏 API key/Claude 工作流，不是 ChatGPT HTTP MCP 安全网关。</td></tr>
+            <tr><td><code>playcations/FileSystem-MCP-for-GPT</code></td><td>反例/参考</td><td>说明 ChatGPT 接本机文件系统可行，但暴露 shell、apply_patch、文件删除等能力，首版不应这么宽。</td></tr>
+            <tr><td>官方 <code>codex mcp-server</code></td><td>采用</td><td>本机实测暴露 <code>codex</code> 和 <code>codex-reply</code>，正好是我们需要的执行核心。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <details data-component-id="cmp-source-notes">
+        <summary>Source notes</summary>
+        <pre>OpenAI Apps SDK quickstart: ChatGPT app needs an MCP server that defines tools and exposes capabilities to ChatGPT.
+OpenAI Connect from ChatGPT docs: MCP server must be HTTPS reachable; local development can use Secure MCP Tunnel, ngrok, or Cloudflare Tunnel.
+OpenAI Codex MCP docs: Codex supports MCP servers; local stdio and streamable HTTP are documented.
+OpenAI Secure MCP Tunnel docs: private local MCP servers can be reached without public inbound ports.
+Local probe: codex-cli 0.134.0; codex mcp-server tools/list returned codex and codex-reply.
+GitHub probe: riccilnl/colameta is public, Python, 9 stars at check time, no standard license metadata, README says non-commercial.</pre>
+      </details>
+    </section>
+
+    <section data-section-id="implementation">
+      <div class="sec-head"><div class="num">03</div><div><h2>Implementation</h2></div></div>
+      <p class="sec-intro">首版代码已经按最小可验证路线实现。</p>
+      <div class="table-wrap" data-component-id="cmp-implementation-table">
+        <table>
+          <thead><tr><th>部分</th><th>文件</th><th>作用</th></tr></thead>
+          <tbody>
+            <tr><td>配置与安全边界</td><td><code>src/config.ts</code></td><td>解析 host、token、allowed roots、sandbox 和 write 开关；要求 token 或显式本地 no-auth。</td></tr>
+            <tr><td>上游 Codex 连接</td><td><code>src/upstream.ts</code></td><td>用 MCP SDK 启动并连接官方 <code>codex mcp-server</code>。</td></tr>
+            <tr><td>工具层</td><td><code>src/tools.ts</code></td><td>注册 <code>bridge_status</code>、<code>codex_run</code>、<code>codex_reply</code>，并在转发前做 cwd、sandbox、session 来源和敏感文件预检。</td></tr>
+            <tr><td>Session 记录</td><td><code>src/sessionRegistry.ts</code></td><td>只允许继续本 bridge 创建过的 Codex thread。</td></tr>
+            <tr><td>HTTP MCP 与文档</td><td><code>src/server.ts</code> / <code>docs/</code></td><td>提供 <code>/mcp</code>、<code>/healthz</code>，并说明 ChatGPT 连接和安全模型。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section data-section-id="verification">
+      <div class="sec-head"><div class="num">04</div><div><h2>Verification</h2></div></div>
+      <p class="sec-intro">验证覆盖静态构建、单元测试、HTTP auth 和真实 MCP 握手。</p>
+      <details data-component-id="cmp-commands">
+        <summary>Commands run</summary>
+        <button data-copy="#commands">Copy</button>
+        <pre id="commands">npm install
+npm run check
+CODEX_GPT_BRIDGE_NO_AUTH=1 CODEX_GPT_BRIDGE_ROOTS=/Users/linghao/Github/codex-gpt-bridge node dist/cli.js
+node --input-type=module [StreamableHTTPClientTransport smoke test]</pre>
+      </details>
+      <div class="card good" data-component-id="cmp-verification-card">
+        <div class="k">Result</div>
+        <p>TypeScript build passed. Vitest passed 15 tests across 3 files. Real HTTP MCP smoke test discovered <code>bridge_status</code>, <code>codex_run</code>, and <code>codex_reply</code>; <code>bridge_status</code> returned upstream Codex MCP tool metadata.</p>
+      </div>
+    </section>
+
+    <section data-section-id="limits">
+      <div class="sec-head"><div class="num">05</div><div><h2>Limits</h2></div></div>
+      <p class="sec-intro">这些是首版刻意不解决或仍需用户确认的点。</p>
+      <div class="card warn" data-component-id="cmp-limitations">
+        <div class="k">Remaining Risk</div>
+        <p>没有在真实 ChatGPT UI 里完成连接，因为这需要你账号侧的 Apps/GPTs developer settings 或 Secure MCP Tunnel 配置。首版也没有实现 preview/apply、OAuth、自建 Web console 或任务队列。<code>CODEX_GPT_BRIDGE_ROOTS</code> 只是启动目录门禁，不是操作系统级文件隔离；高风险仓库仍应先做 sanitized staging copy 或 Codex permission profile。Session 记录是内存态，重启会清空。</p>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+  document.querySelectorAll("button[data-copy]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const target = document.querySelector(button.getAttribute("data-copy"));
+      if (!target) return;
+      await navigator.clipboard.writeText(target.textContent.trim());
+      const old = button.textContent;
+      button.textContent = "Copied";
+      setTimeout(() => { button.textContent = old; }, 1200);
+    });
+  });
+</script>
+</body>
+</html>

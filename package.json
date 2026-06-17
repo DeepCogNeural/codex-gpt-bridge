@@ -1,0 +1,43 @@
+{
+  "name": "codex-gpt-bridge",
+  "version": "0.1.0",
+  "description": "A safe Streamable HTTP MCP bridge from ChatGPT/GPTs to local Codex.",
+  "type": "module",
+  "bin": {
+    "codex-gpt-bridge": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "check": "npm run build && npm run test"
+  },
+  "keywords": [
+    "codex",
+    "chatgpt",
+    "mcp",
+    "model-context-protocol",
+    "bridge"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.12.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

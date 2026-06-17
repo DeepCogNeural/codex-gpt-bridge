@@ -1,0 +1,249 @@
+{
+  "schema_version": "artifact-report.v1",
+  "artifact_id": "chatgpt-codex-bridge-decision-2026-06-17",
+  "title": "ChatGPT 到 Codex 本地桥接决策报告",
+  "template_version": "desktop-report-template.v1",
+  "language": "zh-CN",
+  "source_hashes": [
+    {
+      "path": "../README.md",
+      "sha256": "5df5b86f6a0428d29c09d2aa98889f5122ee70dacbcf6b21eb4abc55b5312519"
+    },
+    {
+      "path": "../package.json",
+      "sha256": "c91f7c7dff35c4f9ed288312628ce6c68a82f88df07e74a8a231104f18e6f516"
+    },
+    {
+      "path": "../package-lock.json",
+      "sha256": "2c2237ba4b38456151cfc2a34e17cd31eb3b4230b621e1133a3dd548b64b415d"
+    },
+    {
+      "path": "../src/config.ts",
+      "sha256": "062e551ea071f91193d2c866e38cf021365a6091f53bb1d3967c5c01a64aa8c6"
+    },
+    {
+      "path": "../src/server.ts",
+      "sha256": "3e7ea412faa771ed0be4e1f86b6ceea76615aae5ec86144ed49a63b3c3305a13"
+    },
+    {
+      "path": "../src/tools.ts",
+      "sha256": "759b506e046fc3a244728fe4e83ba8de0b62272350d83c46b85e5eff0e9fb8c1"
+    },
+    {
+      "path": "../src/sessionRegistry.ts",
+      "sha256": "8350300f2c2594bd51f008e09ce7a0f3adf735179f339ccab6cfe30ac3091465"
+    },
+    {
+      "path": "../src/upstream.ts",
+      "sha256": "a956e31f4429273af31303aef101576c2731d4933cc9a91618144489526c98e6"
+    },
+    {
+      "path": "../test/config.test.ts",
+      "sha256": "dd7062a5f90865c8cd23fdeaee25d3f34a3ebbafb0273590c6fb0c5d5577b77f"
+    },
+    {
+      "path": "../test/tools.test.ts",
+      "sha256": "c003fa9cfebea675dda0f1b336aa10028d8afe411a31f907e25ec9a9c19aeada"
+    },
+    {
+      "path": "../test/server.test.ts",
+      "sha256": "5bfa96fa44112fe2ec15209c4be932cf75ef4eee8944ea2551117fc0cf6d38fc"
+    },
+    {
+      "path": "../docs/chatgpt-setup.md",
+      "sha256": "ce9b211848c97588aa4fe5acd39b5513a262230add3a78f9fc9b86cf8dd0e6fa"
+    },
+    {
+      "path": "../docs/security.md",
+      "sha256": "1f9ea0100a5fd73643010901ce46438a9a092998b91e22b57cfffbe152870806"
+    }
+  ],
+  "sections": [
+    {
+      "id": "decision",
+      "title": "Decision",
+      "summary": "新建小型 MIT 项目，不 fork ColaMeta。"
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence",
+      "summary": "列出官方文档、本机 Codex MCP 和候选仓库证据。"
+    },
+    {
+      "id": "implementation",
+      "title": "Implementation",
+      "summary": "说明首版实现文件和职责。"
+    },
+    {
+      "id": "verification",
+      "title": "Verification",
+      "summary": "记录测试和真实 MCP smoke。"
+    },
+    {
+      "id": "limits",
+      "title": "Limits",
+      "summary": "说明首版限制和剩余风险。"
+    }
+  ],
+  "components": [
+    {
+      "id": "cmp-tldr",
+      "type": "tldr",
+      "section_id": "decision",
+      "purpose": "首屏给结论。"
+    },
+    {
+      "id": "cmp-summary",
+      "type": "summary",
+      "section_id": "decision",
+      "purpose": "展示四个关键信号。"
+    },
+    {
+      "id": "cmp-decision-notes",
+      "type": "card",
+      "section_id": "decision",
+      "purpose": "区分采用、暂缓和后续事项。"
+    },
+    {
+      "id": "cmp-flow",
+      "type": "diagram",
+      "section_id": "decision",
+      "purpose": "展示 ChatGPT 到本机 Codex 的数据流。"
+    },
+    {
+      "id": "cmp-candidate-table",
+      "type": "table",
+      "section_id": "evidence",
+      "purpose": "对比候选项目和采用结论。"
+    },
+    {
+      "id": "cmp-source-notes",
+      "type": "folded_evidence",
+      "section_id": "evidence",
+      "purpose": "折叠原始来源说明。"
+    },
+    {
+      "id": "cmp-implementation-table",
+      "type": "table",
+      "section_id": "implementation",
+      "purpose": "列出实现文件和职责。"
+    },
+    {
+      "id": "cmp-commands",
+      "type": "command",
+      "section_id": "verification",
+      "purpose": "记录可复跑验证命令。"
+    },
+    {
+      "id": "cmp-verification-card",
+      "type": "card",
+      "section_id": "verification",
+      "purpose": "总结验证结果。"
+    },
+    {
+      "id": "cmp-limitations",
+      "type": "card",
+      "section_id": "limits",
+      "purpose": "说明剩余风险。"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-small-bridge",
+      "text": "新建小型桥接项目比 fork ColaMeta 更适合首版。",
+      "status": "supported",
+      "evidence_ids": ["ev-colameta", "ev-codex-mcp", "ev-implementation"]
+    },
+    {
+      "id": "claim-official-codex-mcp",
+      "text": "本机官方 codex mcp-server 已暴露 codex 和 codex-reply，可以作为执行核心。",
+      "status": "supported",
+      "evidence_ids": ["ev-local-probe"]
+    },
+    {
+      "id": "claim-chatgpt-needs-http",
+      "text": "ChatGPT 侧需要 HTTPS 可达的 MCP endpoint，因此需要 HTTP bridge 或 tunnel。",
+      "status": "supported",
+      "evidence_ids": ["ev-openai-apps", "ev-openai-connect"]
+    },
+    {
+      "id": "claim-tests-pass",
+      "text": "首版实现通过构建、单元测试和真实 HTTP MCP smoke。",
+      "status": "supported",
+      "evidence_ids": ["ev-verification"]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-openai-apps",
+      "kind": "official-doc",
+      "summary": "OpenAI Apps SDK 文档说明 ChatGPT app 需要 MCP server 暴露工具。",
+      "source": "https://developers.openai.com/apps-sdk/quickstart"
+    },
+    {
+      "id": "ev-openai-connect",
+      "kind": "official-doc",
+      "summary": "OpenAI 文档说明连接 ChatGPT 时 MCP server 需要 HTTPS 可达，本地开发可用 Secure MCP Tunnel/ngrok/Cloudflare Tunnel。",
+      "source": "https://developers.openai.com/apps-sdk/deploy/connect-chatgpt"
+    },
+    {
+      "id": "ev-codex-mcp",
+      "kind": "official-doc",
+      "summary": "OpenAI Codex MCP 文档说明 Codex 支持 MCP server 配置和 stdio/HTTP 类型。",
+      "source": "https://developers.openai.com/codex/mcp"
+    },
+    {
+      "id": "ev-local-probe",
+      "kind": "command",
+      "summary": "本机 codex mcp-server tools/list 返回 codex 和 codex-reply。",
+      "source": "local command: codex mcp-server JSON-RPC tools/list"
+    },
+    {
+      "id": "ev-colameta",
+      "kind": "github",
+      "summary": "riccilnl/colameta README 显示其目标高度相关，但 license 文本禁止商业使用。",
+      "source": "https://github.com/riccilnl/colameta"
+    },
+    {
+      "id": "ev-implementation",
+      "kind": "local-files",
+      "summary": "本项目实现 HTTP MCP gateway、cwd gate、sandbox policy、tracked session reply、sensitive-file preflight、upstream Codex stdio client。",
+      "source": "src/config.ts, src/server.ts, src/tools.ts, src/sessionRegistry.ts, src/upstream.ts"
+    },
+    {
+      "id": "ev-verification",
+      "kind": "commands",
+      "summary": "npm run check 通过 15 个测试；真实 HTTP MCP smoke 发现三项工具并读取 bridge_status。",
+      "source": "local verification run on 2026-06-17"
+    }
+  ],
+  "verification": {
+    "status": "passed",
+    "checked_at": "2026-06-17",
+    "checks": [
+      {
+        "name": "build-and-tests",
+        "status": "passed",
+        "detail": "npm run check passed with 3 test files and 15 tests."
+      },
+      {
+        "name": "http-mcp-smoke",
+        "status": "passed",
+        "detail": "StreamableHTTPClientTransport listed bridge_status, codex_run, codex_reply and called bridge_status."
+      },
+      {
+        "name": "source-research",
+        "status": "passed",
+        "detail": "Official OpenAI docs and live GitHub repositories were checked."
+      }
+    ]
+  },
+  "limitations": [
+    "ChatGPT UI connection was not completed because it requires account-side developer settings or tunnel configuration.",
+    "Write mode is implemented as opt-in policy but was not exercised against a real repository in smoke testing.",
+    "CODEX_GPT_BRIDGE_ROOTS is a bridge-level cwd gate, not OS-level filesystem isolation.",
+    "Tracked Codex reply sessions are in memory only and expire after 6 hours.",
+    "Sensitive file preflight only blocks common filenames and extensions; high-risk repositories still need a sanitized staging copy.",
+    "OAuth is not implemented in v0.1; bearer token is only for local development, manual MCP clients, or a trusted proxy."
+  ]
+}
