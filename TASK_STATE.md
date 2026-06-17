@@ -2,39 +2,59 @@
 
 ## Goal
 
-Build a clean open-source project that lets ChatGPT/GPTs call a controlled local Codex executor through MCP.
+Help the user actually use and test `codex-gpt-bridge`: a small Streamable HTTP MCP bridge that lets ChatGPT/GPTs call local Codex through the official `codex mcp-server`.
 
-## Current Plan
+## Current Status
 
-- Implement a small TypeScript Streamable HTTP MCP server.
-- Use official `codex mcp-server` as the upstream executor.
-- Expose only scoped tools: status, run Codex, reply to Codex.
-- Enforce bearer token or explicit local no-auth, allowed cwd roots, tracked Codex sessions, sensitive-file preflight, and sandbox policy.
-- Push to a new GitHub repository under `DeepCogNeural`.
+- Valid as of: 2026-06-17 11:39:02 EDT.
+- Repository: `https://github.com/DeepCogNeural/codex-gpt-bridge`.
+- Branch: `main`.
+- Latest commit before this state update: `ac4ed38 Initial codex gpt bridge`.
+- Local worktree was clean before the state update.
+- Current testing policy: read-only only; do not enable `workspace-write` or `danger-full-access`.
 
 ## Facts
 
 - Local Codex CLI is `codex-cli 0.134.0`.
-- `codex mcp-server` exposes `codex` and `codex-reply` over stdio MCP.
-- OpenAI docs say ChatGPT Apps/GPTs connect through MCP over HTTPS; local development should use Secure MCP Tunnel or another HTTPS tunnel.
-- `riccilnl/colameta` is highly related but alpha and non-commercial licensed.
-
-## Changed Files
-
-- Initial TypeScript project scaffold under `/Users/linghao/Github/codex-gpt-bridge`.
-- Final reviewer fixes: explicit auth, tracked `codex_reply`, no ChatGPT-side model/developer-instruction/approval-policy override, symlink-sensitive preflight, clarified docs.
+- `codex mcp-server` is available and exposes upstream tools `codex` and `codex-reply`.
+- Bridge tools exposed over HTTP MCP: `bridge_status`, `codex_run`, `codex_reply`.
+- Default bridge policy remains `read-only`, `approval-policy=never`, `allowWorkspaceWrite=false`, `allowDangerFullAccess=false`.
+- `CODEX_GPT_BRIDGE_NO_AUTH=1` is acceptable only for localhost testing. Public/tunnel usage should use bearer token or an OAuth/PKCE proxy.
 
 ## Verification
 
-- `npm run check` passed: TypeScript build plus 15 Vitest tests across config, tools, and HTTP auth.
-- Real HTTP MCP smoke test passed against local `/mcp`: SDK client discovered `bridge_status`, `codex_run`, and `codex_reply`; `bridge_status` reached the local official `codex mcp-server`.
-- HTML decision report generated; `check_html_artifact.py` and `check_artifact_json.py` passed after final reviewer fixes.
-- Final adversarial review found no remaining code/security blockers; only publish closure remained.
+- `npm run check` passed on 2026-06-17: TypeScript build plus 15 Vitest tests.
+- Local bridge started successfully on fallback port `8876`:
+  - `CODEX_GPT_BRIDGE_NO_AUTH=1`
+  - `CODEX_GPT_BRIDGE_ROOTS=/Users/linghao/Github/codex-gpt-bridge`
+  - `CODEX_GPT_BRIDGE_DEFAULT_SANDBOX=read-only`
+- SDK Streamable HTTP client connected to `http://127.0.0.1:8876/mcp`.
+- `client.listTools()` returned `bridge_status,codex_run,codex_reply`.
+- `bridge_status` confirmed allowed root, read-only default policy, no write/danger permission, and reachable official upstream Codex MCP tools.
+- Real `codex_run` read-only smoke passed. Codex read `README.md` and `package.json`, reported `npm run check`, and stated it did not modify files.
+- Real `codex_reply` smoke passed for bridge-created thread `019ed63b-c38e-76b0-8944-e15208b20e84`.
+- Negative safety checks passed:
+  - Unknown `codex_reply` thread id was rejected.
+  - `codex_run` with `sandbox=workspace-write` was rejected before upstream execution.
+- `curl http://127.0.0.1:8876/healthz` returned `{"ok":true,"name":"codex-gpt-bridge"}`.
+- `git status --short` had no output after read-only smoke tests.
 
-## Blockers
+## Current Runtime
 
-- None currently.
+- A local dev server may still be running in this Codex session on `http://127.0.0.1:8876/mcp`.
+- Default port `8765` returned `EADDRINUSE` during this test. `lsof` did not show a listener at the moment checked, so treat that as a transient or hidden-port state and prefer an explicit fallback port if it recurs.
+
+## Changed Files
+
+- `TASK_STATE.md` updated with the current read-only smoke verification.
 
 ## Next Step
 
-Create the initial commit, create the public GitHub remote, and push `main`.
+If the user wants ChatGPT/GPTs to call this bridge directly, expose `http://127.0.0.1:8876/mcp` through a secure HTTPS tunnel, configure the MCP URL in ChatGPT/GPTs, call `bridge_status` first, then run a read-only `codex_run`.
+
+## Cautions
+
+- Do not put secrets in prompts or logs.
+- Do not disable secret scanning unless the working directory is deliberately sanitized.
+- Do not expose a no-auth endpoint outside localhost.
+- Do not enable write mode until the read-only ChatGPT-side workflow is proven.
