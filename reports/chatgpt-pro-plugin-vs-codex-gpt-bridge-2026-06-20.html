@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="artifact-contract" content="artifact-report.v1">
+<meta name="artifact-id" content="chatgpt-pro-plugin-vs-codex-gpt-bridge-2026-06-20">
+<title>ChatGPT Pro Plugin vs Codex GPT Bridge</title>
+<style>
+  :root {
+    --ivory:#FAF9F5;
+    --slate:#141413;
+    --clay:#D97757;
+    --oat:#E3DACC;
+    --olive:#788C5D;
+    --gray-100:#F0EEE6;
+    --gray-300:#D1CFC5;
+    --gray-500:#87867F;
+    --gray-700:#3D3D3A;
+    --white:#FFFFFF;
+    --serif:ui-serif, Georgia, "Times New Roman", serif;
+    --sans:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono:ui-monospace, "SF Mono", Menlo, Monaco, monospace;
+    --border:1.5px solid var(--gray-300);
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0;
+    padding:56px 32px 120px;
+    background:var(--ivory);
+    color:var(--gray-700);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.62;
+  }
+  .page { max-width:1180px; margin:0 auto; }
+  header { margin-bottom:10px; }
+  .eyebrow {
+    color:var(--gray-500);
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0;
+    text-transform:uppercase;
+    margin-bottom:12px;
+  }
+  h1,h2,h3 {
+    color:var(--slate);
+    font-family:var(--serif);
+    font-weight:500;
+    line-height:1.12;
+  }
+  h1 { margin:0 0 18px; font-size:38px; line-height:1.15; }
+  h2 { margin:0; font-size:26px; }
+  h3 { margin:0 0 8px; font-size:22px; }
+  p { margin:0 0 12px; }
+  a { color:var(--slate); text-decoration-color:var(--clay); text-underline-offset:3px; }
+  code {
+    background:var(--gray-100);
+    border-radius:4px;
+    color:var(--slate);
+    font-family:var(--mono);
+    font-size:.92em;
+    padding:1px 5px;
+  }
+  .prompt-box,.card,.table-wrap,details,.note-card {
+    background:var(--white);
+    border:var(--border);
+    border-radius:12px;
+  }
+  .prompt-box { padding:16px 20px; font-size:14.5px; }
+  .tldr {
+    background:var(--slate);
+    border-radius:12px;
+    color:var(--ivory);
+    margin:10px 0 34px;
+    padding:22px 26px;
+  }
+  .summary {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:16px;
+    margin-bottom:60px;
+  }
+  .card { padding:18px 20px; }
+  .card.warn { border-left:4px solid var(--clay); padding-left:17px; }
+  .card.good { border-left:4px solid var(--olive); padding-left:17px; }
+  .k {
+    color:var(--gray-500);
+    font-family:var(--sans);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0;
+    text-transform:uppercase;
+  }
+  .v { color:var(--slate); font-size:18px; font-weight:700; margin-top:6px; }
+  section {
+    margin-bottom:64px;
+    scroll-margin-top:24px;
+  }
+  section:last-of-type { margin-bottom:0; }
+  .sec-head {
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    margin-bottom:8px;
+  }
+  .num {
+    background:var(--oat);
+    border-radius:8px;
+    color:var(--slate);
+    font-family:var(--mono);
+    font-size:12px;
+    padding:3px 9px;
+  }
+  .sec-intro {
+    color:var(--gray-500);
+    font-size:14.5px;
+    margin:0 0 26px;
+    max-width:780px;
+  }
+  hr.rule {
+    border:0;
+    border-top:var(--border);
+    margin:0 0 24px;
+  }
+  .decision-grid {
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    margin-bottom:20px;
+  }
+  .note-card { padding:18px 20px; }
+  .note-card.hot { border-left:4px solid var(--clay); padding-left:17px; }
+  .note-card.good { border-left:4px solid var(--olive); padding-left:17px; }
+  .note-card h3 {
+    margin:0 0 7px;
+    color:var(--slate);
+    font-family:var(--serif);
+    font-size:19px;
+    font-weight:500;
+    line-height:1.12;
+  }
+  .note-card p { margin:0; font-size:14px; }
+  .diagram {
+    background:var(--white);
+    border:var(--border);
+    border-radius:12px;
+    overflow-x:auto;
+    padding:18px;
+  }
+  .diagram text { font-family:var(--sans); }
+  .table-wrap { overflow-x:auto; }
+  table { border-collapse:collapse; min-width:900px; width:100%; }
+  th,td { border-bottom:1px solid var(--gray-300); padding:11px 12px; text-align:left; vertical-align:top; }
+  th { background:var(--gray-100); color:var(--gray-700); font-size:12px; text-transform:uppercase; }
+  td:first-child { color:var(--slate); font-weight:650; width:170px; }
+  details { margin:14px 0; padding:14px 16px; }
+  summary { color:var(--clay); cursor:pointer; font-weight:700; }
+  pre {
+    background:var(--slate);
+    border-radius:10px;
+    color:var(--ivory);
+    overflow-x:auto;
+    padding:14px 16px;
+  }
+  button[data-copy] {
+    background:var(--slate);
+    border:0;
+    border-radius:7px;
+    color:var(--ivory);
+    cursor:pointer;
+    font:700 12px var(--sans);
+    padding:8px 10px;
+  }
+  @media (max-width: 860px) {
+    body { padding:36px 18px 80px; }
+    .summary,.decision-grid { grid-template-columns:1fr; }
+    h1 { font-size:32px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="eyebrow">codex-gpt-bridge · decision report · 2026-06-20</div>
+    <h1>ChatGPT Pro Plugin vs Codex GPT Bridge</h1>
+    <div class="prompt-box">问题：用户日常更想从 Codex 里调用 ChatGPT，尤其希望不用笨重的 <code>@chrome</code>。本报告比较外部 <code>codex-chatgpt-pro-plugin</code> 与本 repo 的 <code>codex-gpt-bridge</code>，并给出融合路线。</div>
+  </header>
+
+  <main>
+    <div class="tldr" data-component-id="cmp-tldr"><strong>TL;DR:</strong> 如果主目标是“Codex 调 ChatGPT Pro 网站”，外部 plugin 是更正确的目标线，因为它自己启动并控制专用 Chrome/CDP，不需要 <code>@chrome</code>。但它今天还不能被写成稳定日常默认：安装 smoke、materialized package <code>init</code> 和 live proof 都要先过。本 repo 的强项仍是“ChatGPT UI 调本地 Codex MCP”。</div>
+
+    <div class="summary" aria-label="summary" data-component-id="cmp-summary">
+      <div class="card good"><div class="k">Codex -> ChatGPT</div><div class="v">目标线：外部 plugin</div></div>
+      <div class="card"><div class="k">ChatGPT -> Codex</div><div class="v">本 repo 更合适</div></div>
+      <div class="card warn"><div class="k">当前阻塞</div><div class="v">安装/打包需修</div></div>
+      <div class="card"><div class="k">融合判断</div><div class="v">伴侣工具，不替换</div></div>
+    </div>
+
+    <section data-section-id="decision">
+      <div class="sec-head"><div class="num">01</div><div><h2>结论</h2></div></div>
+      <p class="sec-intro">先讲人话：两者不是同类产品。一个是 Codex 伸手去叫 ChatGPT Pro，一个是 ChatGPT 伸手来叫本地 Codex。</p>
+      <hr class="rule">
+      <div class="decision-grid" data-component-id="cmp-decision-notes">
+        <div class="note-card good">
+          <h3>先修后启用</h3>
+          <p>把 <code>chatgpt-pro</code> 定为 Codex 调 ChatGPT Pro 的目标线；只有安装、打包和 live call 证明通过后，才升级为日常默认。</p>
+        </div>
+        <div class="note-card">
+          <h3>继续保留</h3>
+          <p><code>Local Codex Bridge Secure</code> 继续负责 ChatGPT UI 调本地 Codex。它是 MCP/Tunnel 路径，安全边界和工具 schema 已经更清楚。</p>
+        </div>
+        <div class="note-card hot">
+          <h3>暂不重写</h3>
+          <p>不要把两个项目硬揉成一个大框架。先修外部 plugin 的安装兼容、materialized package init 和 live 证明，再决定 fork、vendor 或 companion。</p>
+        </div>
+      </div>
+    </section>
+
+    <section data-section-id="comparison">
+      <div class="sec-head"><div class="num">02</div><div><h2>全方位对比表</h2></div></div>
+      <p class="sec-intro">核心分歧是方向、控制面和稳定性。表里“更好”只针对你的日常目标：从 Codex 里调用 ChatGPT。</p>
+      <details data-component-id="cmp-comparison-table">
+        <summary>完整对比表</summary>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>维度</th><th>codex-chatgpt-pro-plugin</th><th>codex-gpt-bridge</th><th>直白判断</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>主要方向</td>
+              <td><code>Codex -> ChatGPT Pro Web UI</code>。Codex 通过 CLI 发 prompt，ChatGPT 网站回答。</td>
+              <td><code>ChatGPT UI -> local Codex MCP</code> 是主线；另有 <code>Codex -> OpenAI Responses API</code> 的 <code>ask_chatgpt</code>。</td>
+              <td>你的日常偏向 Codex 调 ChatGPT，所以外部 plugin 更贴目标；但还需要先通过启用门槛。</td>
+            </tr>
+            <tr>
+              <td>是不是 MCP</td>
+              <td>主能力不是 MCP。它是 Codex plugin + skill + <code>chatgpt-pro</code> CLI。</td>
+              <td>是 MCP。ChatGPT 看到的是 HTTP MCP app；Codex 侧也有 stdio MCP server。</td>
+              <td>MCP 不是唯一标准。对 Codex 调 ChatGPT，外部 plugin 的 CLI/browser line 更对题，但当前还不是已验证日常默认。</td>
+            </tr>
+            <tr>
+              <td>浏览器控制</td>
+              <td>自己启动专用 Chrome profile，通过 CDP 控制 <code>127.0.0.1:9222</code>，文本输入走 DOM focus + CDP <code>Input.insertText</code> + DOM button。</td>
+              <td>不控制 ChatGPT 浏览器。ChatGPT 侧通过 Developer Mode app 和 Secure MCP Tunnel 调本地桥。</td>
+              <td>外部 plugin 的关键优点就是不用 <code>@chrome</code>，Codex 直接跑 CLI 就能调 ChatGPT 网页。</td>
+            </tr>
+            <tr>
+              <td>是否用 ChatGPT Pro 网站能力</td>
+              <td>是。它依赖用户已登录的 ChatGPT Pro 网站会话，默认选择 live <code>Pro</code> intelligence level。</td>
+              <td>Codex -> ChatGPT 路径不是网站，是 OpenAI Responses API；需要 <code>OPENAI_API_KEY</code> 和 API 模型访问。</td>
+              <td>如果你认为网站 Pro 比 API 侧更强，外部 plugin 是唯一对准这点的方案。</td>
+            </tr>
+            <tr>
+              <td>上下文传递</td>
+              <td>可生成 repo-context monofile，带文件树、LOC、文件内容、source map、hash；可上传或 inline，上传需确认。</td>
+              <td>ChatGPT 通过 <code>codex_read</code> 让本地 Codex 读项目并返回摘要；不会自动把整个 repo 打包上传给 ChatGPT。</td>
+              <td>外部 plugin 适合让 ChatGPT 直接看大上下文；本 repo 更适合让 Codex 先过滤，再给 ChatGPT 事实。</td>
+            </tr>
+            <tr>
+              <td>安全边界</td>
+              <td>不输入密码/OTP，不读 cookies/session storage；专用 profile；自动生成的 repo context 有 secret path/content scan；但显式上传文件仍要调用者自己 scrub，本质仍是自动化已登录网页账号。</td>
+              <td>allowed roots、read-only 默认、secret preflight、禁 <code>danger-full-access</code>、write mode owner opt-in；但 allowed root 不是硬 OS sandbox。</td>
+              <td>两边安全模型不同：plugin 风险在账号/网页自动化；bridge 风险在本地执行边界。</td>
+            </tr>
+            <tr>
+              <td>状态与记账</td>
+              <td>repo-scoped rooms：<code>main/debug/critic/scratch</code>；每次 call 有 receipt、transcript、screenshot、network/console logs。</td>
+              <td>有 bridge jobs、<code>jobId</code> polling、bridge-created Codex thread registry；状态在本地进程内，重启会丢 job/session registry。</td>
+              <td>plugin 的 receipts/rooms 更适合长期“advisor/reviewer”工作流，值得吸收。</td>
+            </tr>
+            <tr>
+              <td>并发</td>
+              <td>一个 shared logged-in browser profile，加全局 browser-profile lock 串行化，避免多个 agent 抢同一个 ChatGPT 页面。</td>
+              <td>HTTP MCP 工具可启动长 Codex job，超过 fast-return 返回 <code>jobId</code>；ChatGPT UI 自动链式 polling 有时会被安全层挡。</td>
+              <td>plugin 处理“多个 Codex agent 抢 ChatGPT”更具体；bridge 处理“ChatGPT 等本地 Codex”更具体。</td>
+            </tr>
+            <tr>
+              <td>稳定性风险</td>
+              <td>依赖 ChatGPT 网站 DOM、composer、model selector、登录状态。源码有 fail-closed code，但网站变化仍会破。</td>
+              <td>MCP/tool schema 更稳定；但 ChatGPT UI 安全层、Tunnel 超时、schema refresh 仍会影响使用。</td>
+              <td>API/MCP 比网页自动化稳；但网页自动化能用到 ChatGPT Pro 产品能力。这是 tradeoff。</td>
+            </tr>
+            <tr>
+              <td>当前验证</td>
+              <td>本次 clone HEAD <code>0cc5c550</code>，源码和 docs 清楚；<code>npm test</code> 失败在 <code>test:plugin-install</code>，原因是当前 Codex CLI 不接受 <code>marketplace add ... --json</code>。materialized plugin 目录的 <code>init</code> 也会因缺 <code>.codex/skills</code> 失败。</td>
+              <td>本次 <code>npm run check</code> 通过：TypeScript build + 4 个 Vitest 文件 / 35 tests。</td>
+              <td>外部 plugin 架构有价值，但拿来就说稳定还太早。本 repo 当前测试状态更稳。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      </details>
+    </section>
+
+    <section data-section-id="fusion">
+      <div class="sec-head"><div class="num">03</div><div><h2>融会贯通方案</h2></div></div>
+      <p class="sec-intro">奥卡姆剃刀：不要造第三个大系统。保留两条链路，把它们定位清楚；外部 plugin 先作为目标线修通，再升级成默认。</p>
+      <div class="diagram" data-component-id="cmp-flow">
+        <svg viewBox="0 0 920 210" role="img" aria-label="Two complementary ChatGPT Codex bridge lines">
+          <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#D97757"></path></marker></defs>
+          <rect x="30" y="36" width="180" height="62" rx="10" fill="#FFFFFF" stroke="#D1CFC5"></rect>
+          <text x="58" y="68" font-size="15" font-weight="700">Codex</text>
+          <text x="58" y="88" font-size="12" fill="#87867F">本地执行者</text>
+          <line x1="210" y1="67" x2="330" y2="67" stroke="#D97757" stroke-width="2" marker-end="url(#arrow)"></line>
+          <rect x="332" y="36" width="214" height="62" rx="10" fill="#FFF7F3" stroke="#D97757"></rect>
+          <text x="360" y="68" font-size="15" font-weight="700">chatgpt-pro CLI</text>
+          <text x="360" y="88" font-size="12" fill="#87867F">专用 Chrome/CDP</text>
+          <line x1="546" y1="67" x2="665" y2="67" stroke="#D97757" stroke-width="2" marker-end="url(#arrow)"></line>
+          <rect x="668" y="36" width="220" height="62" rx="10" fill="#FFFFFF" stroke="#D1CFC5"></rect>
+          <text x="696" y="68" font-size="15" font-weight="700">ChatGPT Pro Web</text>
+          <text x="696" y="88" font-size="12" fill="#87867F">advisor / reviewer</text>
+
+          <rect x="30" y="132" width="180" height="62" rx="10" fill="#FFFFFF" stroke="#D1CFC5"></rect>
+          <text x="58" y="164" font-size="15" font-weight="700">ChatGPT UI</text>
+          <text x="58" y="184" font-size="12" fill="#87867F">用户起点</text>
+          <line x1="210" y1="163" x2="330" y2="163" stroke="#D97757" stroke-width="2" marker-end="url(#arrow)"></line>
+          <rect x="332" y="132" width="214" height="62" rx="10" fill="#FFFFFF" stroke="#D1CFC5"></rect>
+          <text x="360" y="164" font-size="15" font-weight="700">Local Codex Bridge</text>
+          <text x="360" y="184" font-size="12" fill="#87867F">Secure MCP Tunnel</text>
+          <line x1="546" y1="163" x2="665" y2="163" stroke="#D97757" stroke-width="2" marker-end="url(#arrow)"></line>
+          <rect x="668" y="132" width="220" height="62" rx="10" fill="#FFFFFF" stroke="#D1CFC5"></rect>
+          <text x="696" y="164" font-size="15" font-weight="700">local Codex MCP</text>
+          <text x="696" y="184" font-size="12" fill="#87867F">read / run / reply</text>
+        </svg>
+      </div>
+      <details data-component-id="cmp-fusion-table">
+        <summary>可吸收的设计</summary>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>吸收点</th><th>来自 plugin</th><th>放进我们 workflow 的方式</th></tr></thead>
+          <tbody>
+            <tr><td>专用浏览器线</td><td>专用 Chrome profile + CDP，不用 <code>@chrome</code>。</td><td>作为 Codex 侧默认 ChatGPT Pro advisor line，而不是塞进 MCP bridge。</td></tr>
+            <tr><td>repo rooms</td><td><code>main/debug/critic/scratch</code> 绑定到 repo。</td><td>把 advisor 与 reviewer 长期固定为 repo-scoped room，避免每次新开 ChatGPT 丢上下文。</td></tr>
+            <tr><td>receipts</td><td>保存 prompt、response、hash、截图、网络和 console 记录。</td><td>对高风险 planning/review 要求 receipt 路径进入 TASK_STATE 或报告。</td></tr>
+            <tr><td>repo context</td><td>自动生成 monofile，带 source map 和 secret scan。</td><td>用于 architecture/review；普通小任务仍只传 digest/diff，避免上传太多。</td></tr>
+            <tr><td>browser lock</td><td>全局 lock 串行化 ChatGPT 网站控制。</td><td>保留。多个 Codex 子任务可以排队，但不能同时抢同一个 ChatGPT profile。</td></tr>
+            <tr><td>fail closed</td><td>登录、composer、response 绑定不清楚时返回稳定错误码。</td><td>继续采用，尤其是 <code>response.possibly_stale</code> 不能当成功回答。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      </details>
+      <div class="table-wrap" data-component-id="cmp-readiness-table">
+        <table>
+          <thead><tr><th>启用门槛</th><th>必须通过什么</th><th>没通过时怎么做</th></tr></thead>
+          <tbody>
+            <tr><td>安装兼容</td><td>修掉 <code>plugin marketplace add ... --json</code> 与当前 Codex CLI 的不兼容，或写 wrapper 兼容新旧 CLI。</td><td>继续用 source checkout 只读研究，不把它设成默认。</td></tr>
+            <tr><td>打包路径</td><td>materialized plugin 里的 <code>bin/chatgpt-pro init</code> 能找到 <code>skills/chatgpt-pro-line/SKILL.md</code>，不再依赖缺失的 <code>.codex/skills</code>。</td><td>不要从 materialized package 直接推荐安装。</td></tr>
+            <tr><td>live proof</td><td><code>doctor --warm</code>、人工登录、<code>doctor --live</code>、一次 <code>main</code> advisor call、一次 <code>critic --fresh</code> review call 都成功并落 receipt。</td><td>Codex 继续用本 repo 的 API-backed <code>ask_chatgpt</code> 做临时模型调用。</td></tr>
+            <tr><td>上下文安全</td><td>repo-context 自动扫描通过；显式 <code>--upload-file</code> 只上传人工确认过的窄文件，如 <code>diff.patch</code> 和 <code>test-output.txt</code>。</td><td>改用摘要，不上传原始 repo 或敏感文件。</td></tr>
+            <tr><td>日常默认</td><td>以上全过后，才把 <code>chatgpt-pro</code> 写成 Codex 日常 advisor/reviewer 默认入口。</td><td>保持“目标线/伴侣工具”定位，不替换当前 MCP bridge。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section data-section-id="workflow">
+      <div class="sec-head"><div class="num">04</div><div><h2>日常流程</h2></div></div>
+      <p class="sec-intro">两条入口固定下来，后续 agent 不需要猜。注意：<code>chatgpt-pro</code> 是“启用门槛通过后的日常流程”，门槛没过时用 API-backed <code>ask_chatgpt</code> 或继续人工 ChatGPT。</p>
+      <div class="table-wrap" data-component-id="cmp-workflow-table">
+        <table>
+          <thead><tr><th>场景</th><th>用什么</th><th>固定流程</th><th>不要做什么</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Codex 想问 ChatGPT 做顶层方案</td>
+              <td>门槛通过后：<code>chatgpt-pro call --alias=main</code></td>
+              <td>传 session digest；需要全 repo 时加 <code>--repo-context=auto --confirm-repo-context-upload</code>；要求输出计划、风险、验收标准、下一步给 Codex 的指令。门槛未过时，临时用 <code>ask_chatgpt</code> 或人工 ChatGPT。</td>
+              <td>不要用 <code>@chrome</code> 人肉操作；不要为小语法问题占用 Pro line。</td>
+            </tr>
+            <tr>
+              <td>Codex 做完后要 ChatGPT critical review</td>
+              <td>门槛通过后：<code>chatgpt-pro call --alias=critic --fresh</code></td>
+              <td>上传 <code>diff.patch</code>、<code>test-output.txt</code> 或窄上下文；要求只输出 <code>PASS</code> 或 <code>NEEDS_CHANGES</code>。</td>
+              <td>不要把 ChatGPT 当 oracle。Codex 仍要用本地文件、测试、日志验证建议。</td>
+            </tr>
+            <tr>
+              <td>ChatGPT UI 要调查本地项目</td>
+              <td><code>@Local Codex Bridge Secure</code> + <code>codex_read</code></td>
+              <td>先 <code>bridge_status</code>；再 <code>codex_read</code> 只传 <code>prompt</code>；如果返回 <code>jobId</code>，显式调用 <code>codex_job_status</code>。</td>
+              <td>不要让 ChatGPT 猜 <code>cwd</code>/<code>sandbox</code>；不要把 write mode 当默认。</td>
+            </tr>
+            <tr>
+              <td>ChatGPT UI 要指挥 Codex 修改</td>
+              <td>write-mode <code>Local Codex Bridge Secure</code> + <code>codex_run</code></td>
+              <td>先用窄 <code>CODEX_GPT_BRIDGE_ROOT</code> 重启 write mode；只让 bridge 内 Codex 做最小编辑；编译/测试/渲染由本地 Codex 执行。</td>
+              <td>不要让 bridge 内 Codex 同时做大范围修改和长时间验证。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section data-section-id="evidence">
+      <div class="sec-head"><div class="num">05</div><div><h2>证据与验证</h2></div></div>
+      <p class="sec-intro">Verification: 这次没有跑 live ChatGPT Pro 浏览器调用；结论来自源码、文档、公开 GitHub 页面和本地测试。</p>
+      <details data-component-id="cmp-raw-evidence">
+        <summary>关键证据</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>证据</th><th>结果</th><th>意义</th></tr></thead>
+            <tbody>
+              <tr><td>外部 README</td><td>描述 Codex plugin 驱动 logged-in ChatGPT Pro browser session，附加 repo context，读取回答，写 receipt。</td><td>证明它主打 Codex -> ChatGPT Pro Web UI。</td></tr>
+              <tr><td>外部 browser contract</td><td>专用 Chrome profile 位于 <code>.devspace/chrome-profiles/chatgpt-pro</code>，CDP 暴露在 <code>127.0.0.1:9222</code>。</td><td>证明“不用 @chrome”的原因是它自己持有 browser control plane。</td></tr>
+              <tr><td>外部源码</td><td><code>scripts/chatgpt-call.mjs</code> 用 room、CDP、upload、composer、response anchor、receipt 串完整 call。</td><td>证明不是简单剪贴板脚本，而是有状态调用线。</td></tr>
+              <tr><td>外部测试</td><td><code>npm test</code> 失败在 <code>test:plugin-install</code>：当前 Codex CLI 拒绝 <code>plugin marketplace add ... --json</code>。</td><td>采纳前要修兼容，不能直接宣称“全绿”。</td></tr>
+              <tr><td>外部打包烟测</td><td>materialized plugin 目录的 <code>bin/chatgpt-pro help</code> 能跑，但 <code>init</code> 失败，缺 <code>.codex/skills/chatgpt-pro-line/SKILL.md</code>。</td><td>公开源码根目录和安装后包的路径假设不完全一致，需要修 packaging。</td></tr>
+              <tr><td>本 repo README</td><td>明确 Codex -> model 方向使用 OpenAI Responses API，不调用 ChatGPT Web UI。</td><td>证明本 repo 不能满足“用 ChatGPT Pro 网站”的核心偏好。</td></tr>
+              <tr><td>本 repo <code>src/tools.ts</code></td><td>注册五个 ChatGPT 可见 MCP tools，<code>codex_read</code> 强制 read-only，<code>danger-full-access</code> 被拒。</td><td>证明本 repo 的优势在 ChatGPT -> Codex 安全桥。</td></tr>
+              <tr><td>本 repo 测试</td><td><code>npm run check</code> 通过：build + 4 个 Vitest 文件 / 35 tests。</td><td>证明当前 MCP bridge 文档/实现仍处于可验证状态。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+      <details data-component-id="cmp-commands">
+        <summary>复现命令</summary>
+        <button data-copy="#commands">Copy</button>
+        <pre id="commands">git clone --depth 1 https://github.com/pauljunsukhan/codex-chatgpt-pro-plugin.git /tmp/codex-chatgpt-pro-plugin-current
+git -C /tmp/codex-chatgpt-pro-plugin-current rev-parse HEAD
+npm test
+npm run test:repo-context-policy
+npm run test:non-interference
+npm run test:cli-init
+npm run check
+python3 ~/.codex/skills/html-artifact-report/scripts/check_html_artifact.py reports/chatgpt-pro-plugin-vs-codex-gpt-bridge-2026-06-20.html
+python3 ~/.codex/skills/html-artifact-report/scripts/check_artifact_json.py reports/chatgpt-pro-plugin-vs-codex-gpt-bridge-2026-06-20.json --html reports/chatgpt-pro-plugin-vs-codex-gpt-bridge-2026-06-20.html</pre>
+      </details>
+      <div class="card warn" data-component-id="cmp-limitations">
+        <div class="k">Limitations</div>
+        <p>没有在这次比较里实际打开已登录 ChatGPT Pro 页面跑 live call；原因是这份任务是架构比较和文档固化，不需要触碰用户真实网页会话。外部 plugin 的网页稳定性仍需单独 live proof。另一个限制是外部 plugin 当前安装 smoke 与本机 Codex CLI 参数不兼容，且 materialized package init 路径假设不一致，要先修。自动 repo context 有 secret scan，但显式上传文件仍需要调用者自己 scrub。</p>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+  document.querySelectorAll("button[data-copy]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const target = document.querySelector(button.getAttribute("data-copy"));
+      if (!target) return;
+      await navigator.clipboard.writeText(target.textContent.trim());
+      const old = button.textContent;
+      button.textContent = "Copied";
+      setTimeout(() => { button.textContent = old; }, 1200);
+    });
+  });
+</script>
+</body>
+</html>
