@@ -1,0 +1,253 @@
+{
+  "schema_version": "artifact-report.v1",
+  "artifact_id": "chatgpt-pro-plugin-vs-codex-gpt-bridge-2026-06-20",
+  "title": "ChatGPT Pro Plugin vs Codex GPT Bridge",
+  "template_version": "desktop-report-template.v1",
+  "language": "zh-Hans",
+  "source_hashes": [
+    {
+      "path": "/Users/linghao/Github/codex-gpt-bridge/README.md",
+      "sha256": "55091c12a7ff740dd7b20e20782ffb7e8712167528b55132f9e51f3c5c7ce9a0"
+    },
+    {
+      "path": "/Users/linghao/Github/codex-gpt-bridge/docs/chatgpt-setup.md",
+      "sha256": "95fcfab7d91d4f996873fd24b49953fcbdf374835a08e74174406e709c9021a1"
+    },
+    {
+      "path": "/Users/linghao/Github/codex-gpt-bridge/docs/security.md",
+      "sha256": "f01f8e2f930d3c63172d07c08a6290fe846eb62b4a2c9ca1ae0594461cc95844"
+    },
+    {
+      "path": "/Users/linghao/Github/codex-gpt-bridge/src/tools.ts",
+      "sha256": "5c30ae4190fadb68f3b35812cbcb1eb0e8a8146fd403610754c4b1ef107cb084"
+    },
+    {
+      "path": "/Users/linghao/Github/codex-gpt-bridge/src/chatgptMcp.ts",
+      "sha256": "6576551973e43d0ec5a1ed4b5decee6cdd1651b1007692677ae9710f21c30af7"
+    },
+    {
+      "path": "/Users/linghao/Github/codex-gpt-bridge/package.json",
+      "sha256": "8594cac0dd3eea2a514cf3441ad1e731acc546a0ae9ddf438572adcbe70d51d3"
+    }
+  ],
+  "sections": [
+    {
+      "id": "decision",
+      "title": "结论",
+      "summary": "日常 Codex 调 ChatGPT 时，外部 plugin 是目标线但未过启用门槛；本 repo 继续做反向 MCP 桥。"
+    },
+    {
+      "id": "comparison",
+      "title": "全方位对比表",
+      "summary": "按方向、MCP、浏览器、上下文、安全、状态和稳定性拆开。"
+    },
+    {
+      "id": "fusion",
+      "title": "融会贯通方案",
+      "summary": "保留两条链路，各自负责最强场景。"
+    },
+    {
+      "id": "workflow",
+      "title": "日常流程",
+      "summary": "给 Codex 调 ChatGPT 和 ChatGPT 调 Codex 两套固定用法。"
+    },
+    {
+      "id": "evidence",
+      "title": "证据与验证",
+      "summary": "列出已查证的源码、命令、失败点和限制。"
+    }
+  ],
+  "components": [
+    {
+      "id": "cmp-tldr",
+      "type": "tldr",
+      "section_id": "decision",
+      "purpose": "第一屏给出主决策。"
+    },
+    {
+      "id": "cmp-summary",
+      "type": "summary",
+      "section_id": "decision",
+      "purpose": "概括方向、主链路、保留资产和当前阻塞。"
+    },
+    {
+      "id": "cmp-decision-notes",
+      "type": "card",
+      "section_id": "decision",
+      "purpose": "把采用、保留和暂缓项分开。"
+    },
+    {
+      "id": "cmp-flow",
+      "type": "diagram",
+      "section_id": "fusion",
+      "purpose": "展示两条互补链路。"
+    },
+    {
+      "id": "cmp-comparison-table",
+      "type": "table",
+      "section_id": "comparison",
+      "purpose": "核心对比表。"
+    },
+    {
+      "id": "cmp-fusion-table",
+      "type": "table",
+      "section_id": "fusion",
+      "purpose": "列出吸收哪些设计。"
+    },
+    {
+      "id": "cmp-readiness-table",
+      "type": "table",
+      "section_id": "fusion",
+      "purpose": "定义外部 plugin 升级为日常默认前必须通过的门槛。"
+    },
+    {
+      "id": "cmp-workflow-table",
+      "type": "table",
+      "section_id": "workflow",
+      "purpose": "给出日常使用方式。"
+    },
+    {
+      "id": "cmp-raw-evidence",
+      "type": "folded_evidence",
+      "section_id": "evidence",
+      "purpose": "折叠原始证据。"
+    },
+    {
+      "id": "cmp-commands",
+      "type": "command",
+      "section_id": "evidence",
+      "purpose": "复现验证命令。"
+    },
+    {
+      "id": "cmp-limitations",
+      "type": "card",
+      "section_id": "evidence",
+      "purpose": "说明未验证和残余风险。"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-plugin-better-codex-to-chatgpt",
+      "text": "For the user's Codex -> ChatGPT Pro website goal, codex-chatgpt-pro-plugin is the better target line than the API-backed ask_chatgpt path, but it should not be treated as the daily default until install, packaging, and live proof gates pass.",
+      "status": "supported",
+      "evidence_ids": ["ev-plugin-readme", "ev-bridge-chatgpt-mcp", "ev-plugin-test", "ev-plugin-materialized-init"]
+    },
+    {
+      "id": "claim-bridge-better-chatgpt-to-codex",
+      "text": "codex-gpt-bridge remains the better path for ChatGPT UI -> local Codex MCP execution.",
+      "status": "supported",
+      "evidence_ids": ["ev-bridge-readme", "ev-bridge-tools"]
+    },
+    {
+      "id": "claim-plugin-not-mcp-replacement",
+      "text": "The external plugin is not a replacement for Local Codex Bridge Secure because it is a Codex plugin/CLI controlling ChatGPT Web UI, not a ChatGPT-facing MCP server.",
+      "status": "supported",
+      "evidence_ids": ["ev-plugin-package", "ev-plugin-browser-contract", "ev-bridge-readme"]
+    },
+    {
+      "id": "claim-install-smoke-risk",
+      "text": "The external plugin currently needs compatibility/packaging fixes before being treated as production-ready because plugin-install smoke and materialized package init both expose local failures.",
+      "status": "supported",
+      "evidence_ids": ["ev-plugin-test", "ev-plugin-materialized-init"]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-plugin-readme",
+      "kind": "source",
+      "summary": "External README says the plugin drives a logged-in ChatGPT Pro browser session, attaches repo context, reads the answer, and records receipts.",
+      "source": "https://github.com/pauljunsukhan/codex-chatgpt-pro-plugin"
+    },
+    {
+      "id": "ev-plugin-browser-contract",
+      "kind": "source",
+      "summary": "External browser contract documents a dedicated Chrome profile and CDP endpoint at 127.0.0.1:9222.",
+      "source": "https://github.com/pauljunsukhan/codex-chatgpt-pro-plugin/blob/main/docs/subagent-browser-contract.md"
+    },
+    {
+      "id": "ev-plugin-package",
+      "kind": "source",
+      "summary": "External package exposes chatgpt-pro CLI and a Codex skill, not a ChatGPT-facing MCP server.",
+      "source": "https://github.com/pauljunsukhan/codex-chatgpt-pro-plugin/blob/main/package.json"
+    },
+    {
+      "id": "ev-plugin-test",
+      "kind": "command",
+      "summary": "Local clone at commit 0cc5c550 failed npm test at test:plugin-install because current Codex CLI rejected plugin marketplace add ... --json.",
+      "source": "npm test in /tmp/codex-chatgpt-pro-plugin-current"
+    },
+    {
+      "id": "ev-plugin-materialized-init",
+      "kind": "command",
+      "summary": "Materialized plugin bin help ran, but init failed because plugins/codex-chatgpt-pro-plugin/.codex/skills/chatgpt-pro-line/SKILL.md was missing.",
+      "source": "node /tmp/codex-chatgpt-pro-plugin-current/plugins/codex-chatgpt-pro-plugin/bin/chatgpt-pro init in a temporary directory"
+    },
+    {
+      "id": "ev-bridge-readme",
+      "kind": "file",
+      "summary": "README documents ChatGPT -> Codex via Local Codex Bridge Secure and Codex -> ChatGPT-like model via OpenAI Responses API.",
+      "source": "/Users/linghao/Github/codex-gpt-bridge/README.md"
+    },
+    {
+      "id": "ev-bridge-tools",
+      "kind": "file",
+      "summary": "src/tools.ts registers bridge_status, codex_read, codex_run, codex_reply, and codex_job_status with read-only defaults and sandbox gates.",
+      "source": "/Users/linghao/Github/codex-gpt-bridge/src/tools.ts"
+    },
+    {
+      "id": "ev-bridge-chatgpt-mcp",
+      "kind": "file",
+      "summary": "src/chatgptMcp.ts implements ask_chatgpt through the OpenAI Responses API and states it is not ChatGPT Web UI.",
+      "source": "/Users/linghao/Github/codex-gpt-bridge/src/chatgptMcp.ts"
+    },
+    {
+      "id": "ev-bridge-check",
+      "kind": "command",
+      "summary": "npm run check passed in codex-gpt-bridge with TypeScript build and 35 Vitest tests.",
+      "source": "npm run check"
+    }
+  ],
+  "verification": {
+    "status": "passed",
+    "checked_at": "2026-06-20 18:52 EDT",
+    "checks": [
+      {
+        "name": "external repository clone",
+        "status": "passed",
+        "detail": "Cloned pauljunsukhan/codex-chatgpt-pro-plugin to /tmp and inspected commit 0cc5c5509ebaccfc7dad45b9e02a0f86407c817c."
+      },
+      {
+        "name": "external deterministic test",
+        "status": "failed",
+        "detail": "npm test failed at test:plugin-install because Codex CLI rejected --json on plugin marketplace add."
+      },
+      {
+        "name": "external materialized package init smoke",
+        "status": "failed",
+        "detail": "The materialized plugin bin could show help, but init failed because its .codex/skills path was absent."
+      },
+      {
+        "name": "external focused no-live selftests",
+        "status": "passed",
+        "detail": "test:repo-context-policy, test:non-interference, and test:cli-init passed without touching a live ChatGPT login."
+      },
+      {
+        "name": "bridge test suite",
+        "status": "passed",
+        "detail": "npm run check passed: build plus 4 Vitest files / 35 tests."
+      },
+      {
+        "name": "adversarial review",
+        "status": "passed",
+        "detail": "Independent reviewer flagged that the report overstated immediate daily adoption. The report was revised to make chatgpt-pro a target line gated by install, packaging, and live proof."
+      }
+    ]
+  },
+  "limitations": [
+    "No live ChatGPT Pro browser call was run in this comparison; website automation stability is inferred from source and tests, not from a fresh live session.",
+    "External plugin is young and public repo currently has no releases; adoption should start as companion/fork/wrapper, not as a hard dependency inside this bridge.",
+    "Generated repo context has a secret scan, but explicit upload files still need caller-side scrubbing and review.",
+    "ChatGPT Web UI automation can break when the website DOM or model selector changes. The plugin mitigates this with probes, receipts, and fail-closed errors, but cannot make it as stable as an official API.",
+    "The current bridge's Codex -> ChatGPT path uses the OpenAI Responses API and may incur API usage cost; it does not access ChatGPT Pro website-only behavior."
+  ]
+}

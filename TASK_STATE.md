@@ -11,6 +11,17 @@ Current clarified goal: determine and run the best bridge for two directions:
 
 ## Latest Update
 
+- Valid as of: 2026-06-20 18:52 EDT.
+- User's current priority is daily `Codex -> ChatGPT` use, especially avoiding manual or heavy `@chrome` control.
+- Added a durable comparison artifact:
+  - `reports/chatgpt-pro-plugin-vs-codex-gpt-bridge-2026-06-20.html`
+  - `reports/chatgpt-pro-plugin-vs-codex-gpt-bridge-2026-06-20.json`
+  - `docs/alternatives/chatgpt-pro-plugin-vs-codex-gpt-bridge.md`
+- Decision: keep `codex-gpt-bridge` as the `ChatGPT UI -> local Codex MCP` bridge; treat `pauljunsukhan/codex-chatgpt-pro-plugin` as the target line for `Codex -> ChatGPT Pro Web UI`, but do not make it the daily default until install compatibility, materialized package init, and live ChatGPT proof all pass.
+- Evidence: external repo clone at commit `0cc5c5509ebaccfc7dad45b9e02a0f86407c817c`; external `npm test` failed at `test:plugin-install` because current Codex CLI rejects `plugin marketplace add ... --json`; materialized plugin `bin/chatgpt-pro init` also failed in a temp directory because its `.codex/skills/chatgpt-pro-line/SKILL.md` path is missing; focused no-live external selftests `test:repo-context-policy`, `test:non-interference`, and `test:cli-init` passed; local `npm run check` passed before writing the report with TypeScript build plus 4 Vitest files / 35 tests.
+- Adversarial review finding addressed: the first draft overstated immediate daily adoption of `chatgpt-pro`; the report now states it is a target line gated by install, packaging, upload-safety, and live proof checks. Until then, fall back to API-backed `ask_chatgpt` or manual ChatGPT for website-only reasoning.
+- Final verification at 2026-06-20 19:04 EDT passed: HTML artifact checker, JSON/HTML manifest checker, `git diff --check`, and `npm run check`.
+
 - Valid as of: 2026-06-17 18:02 EDT.
 - User clarified the intended role of external ChatGPT in the bridge workflow: ChatGPT should be the top-level advisor/architect before execution and the independent critical reviewer after execution; local Codex remains the executor and verifier.
 - `README.md` now documents this role contract plus copyable advisor and reviewer prompts.
