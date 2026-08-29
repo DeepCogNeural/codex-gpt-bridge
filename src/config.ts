@@ -1,5 +1,6 @@
 import path from "node:path";
 import { existsSync, readdirSync, realpathSync, statSync } from "node:fs";
+import { isLocalHost } from "./localHost.js";
 
 export type SandboxMode = "read-only" | "workspace-write" | "danger-full-access";
 export type ApprovalPolicy = "untrusted" | "on-request" | "never";
@@ -21,8 +22,6 @@ export type BridgeConfig = {
   secretScan: boolean;
 };
 
-const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1"]);
-
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): BridgeConfig {
   const host = env.CODEX_GPT_BRIDGE_HOST || "127.0.0.1";
   const port = parsePort(env.CODEX_GPT_BRIDGE_PORT || "8765");
@@ -41,7 +40,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BridgeConfig {
   if (!token && !noAuth) {
     throw new Error("Set CODEX_GPT_BRIDGE_TOKEN, or set CODEX_GPT_BRIDGE_NO_AUTH=1 for local-only development.");
   }
-  if (noAuth && !LOCAL_HOSTS.has(host)) {
+  if (noAuth && !isLocalHost(host)) {
     throw new Error("CODEX_GPT_BRIDGE_NO_AUTH=1 is allowed only for local host bindings.");
   }
 

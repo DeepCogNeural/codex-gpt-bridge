@@ -42,6 +42,8 @@ Keychain. If the OpenAI Platform UI does not expose a narrow `Tunnels Read + Use
 runtime-key permission, treat any broader Admin key as temporary and rotate it
 when a narrower key is available.
 
+The remote `ask_chatgpt` HTTP server uses the same bearer rule under `MCP_TOKEN` and `MCP_NO_AUTH`. `NO_AUTH` is rejected on non-local binds. `/healthz` stays unauthenticated.
+
 ## Remaining risk
 
 Any bridge from ChatGPT to a local coding agent can cause local actions if you enable write mode. Keep the allowed roots narrow, inspect Codex output, and prefer read-only until the task truly needs edits.

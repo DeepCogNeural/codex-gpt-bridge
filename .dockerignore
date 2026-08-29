@@ -1,0 +1,9 @@
+.git
+node_modules
+dist
+coverage
+.env
+*.log
+reports
+.codex
+.playwright-cli

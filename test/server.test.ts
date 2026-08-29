@@ -1,3 +1,6 @@
+import { mkdtempSync, realpathSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -93,10 +96,12 @@ describe("http server", () => {
 
   it("keeps async Codex jobs across stateless HTTP MCP requests", async () => {
     const upstream = new DeferredUpstream();
+    const root = realpathSync(mkdtempSync(path.join(tmpdir(), "bridge-http-root-")));
     const baseUrl = await start(
       {
         CODEX_GPT_BRIDGE_NO_AUTH: "1",
-        CODEX_GPT_BRIDGE_FAST_RETURN_MS: "5"
+        CODEX_GPT_BRIDGE_FAST_RETURN_MS: "5",
+        CODEX_GPT_BRIDGE_ROOTS: root
       },
       upstream
     );

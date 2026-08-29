@@ -5,7 +5,8 @@
   "type": "module",
   "bin": {
     "codex-gpt-bridge": "dist/cli.js",
-    "codex-chatgpt-mcp": "dist/chatgpt-cli.js"
+    "codex-chatgpt-mcp": "dist/chatgpt-cli.js",
+    "codex-chatgpt-mcp-http": "dist/chatgpt-http.js"
   },
   "files": [
     "dist",
@@ -20,8 +21,11 @@
     "bridge:chatgpt:secure:keychain": "zsh scripts/start-secure-from-keychain.sh",
     "bridge:chatgpt:secure:write:keychain": "zsh scripts/start-secure-from-keychain.sh --write",
     "chatgpt:mcp": "node dist/chatgpt-cli.js",
+    "chatgpt:mcp:http": "node dist/chatgpt-http.js",
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "check": "npm run build && npm run test"
   },

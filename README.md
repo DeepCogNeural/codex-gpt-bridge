@@ -232,7 +232,7 @@ env_vars = ["OPENAI_API_KEY", "OPENAI_BASE_URL", "CODEX_CHATGPT_MODEL", "CODEX_C
 
 After opening a fresh Codex thread for this trusted project, Codex should have a `chatgpt` MCP server with one tool:
 
-- `ask_chatgpt`: send an explicit prompt to the configured OpenAI API model and return text. Optional `reasoningEffort` values for the default `gpt-5.5` model are `none`, `low`, `medium`, `high`, and `xhigh`.
+- `ask_chatgpt`: send an explicit prompt to the configured OpenAI API model and return text. When the MCP client provides a progress token, live reasoning and output deltas are sent as `notifications/progress` messages; the tool result still contains only the final answer. Optional `reasoningEffort` values for the default `gpt-5.5` model are `none`, `low`, `medium`, `high`, and `xhigh`.
 
 Manual smoke test without real API access:
 
@@ -244,6 +244,79 @@ node dist/chatgpt-cli.js
 The server runs over stdio and waits for MCP JSON-RPC messages. The automated test suite verifies tool registration and request shaping without calling the real API.
 
 Prefer the project config above because `env_vars` forwards `OPENAI_API_KEY` from the running Codex environment without writing the secret into a config file. If you move this MCP config outside the project, add an absolute `cwd` that points to this repository before using `npm run chatgpt:mcp`.
+
+### Cursor stdio
+
+```json
+{
+  "mcpServers": {
+    "gpt-sol": {
+      "command": "node",
+      "args": [
+        "E:\\dev\\codex-gpt-bridge\\dist\\chatgpt-cli.js"
+      ]
+    }
+  }
+}
+```
+
+Set `OPENAI_API_KEY` in the Cursor MCP env, not in the JSON file. Optional: `OPENAI_BASE_URL`, `CODEX_CHATGPT_MODEL`, `CODEX_CHATGPT_TIMEOUT_MS`.
+
+### Cursor Streamable HTTP
+
+`ask_chatgpt` also runs as Streamable HTTP MCP on `POST /mcp`. This uses the same official MCP SDK transport as the Codex bridge. It does not use Supergateway.
+
+Auth matches the Codex bridge: require `Authorization: Bearer <MCP_TOKEN>` unless `MCP_NO_AUTH=1` and `MCP_HOST` is `127.0.0.1`, `localhost`, or `::1`. Docker binds `0.0.0.0`, so set `MCP_TOKEN`. `GET /healthz` does not require a token.
+
+The Codex bridge still uses `CODEX_GPT_BRIDGE_HOST`, `CODEX_GPT_BRIDGE_PORT`, and `CODEX_GPT_BRIDGE_TOKEN`. Do not mix those names with this ChatGPT HTTP process.
+
+```json
+{
+  "mcpServers": {
+    "gpt-sol": {
+      "url": "http://SERVER_IP:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:SOL_MCP_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+Point `SOL_MCP_TOKEN` at the same value as `MCP_TOKEN` on the server.
+
+### Docker
+
+Copy `.env.example` to `.env` and set `OPENAI_API_KEY` and `MCP_TOKEN`. Optional: `OPENAI_BASE_URL` for an OpenAI-compatible Responses API.
+
+```bash
+docker compose up --build -d
+```
+
+Check the process:
+
+```bash
+curl http://127.0.0.1:8080/healthz
+```
+
+You should see `{"ok":true,"name":"codex-chatgpt-mcp"}`.
+
+In Cursor, call `ask_chatgpt` with a prompt. Optional `reasoningEffort` values are `none`, `low`, `medium`, `high`, and `xhigh`. The default model in Docker Compose is `gpt-5.6-sol`. The stdio CLI default remains `gpt-5.5` unless you set `CODEX_CHATGPT_MODEL`.
+
+Build the image without Compose:
+
+```bash
+docker build -t gpt-sol-mcp .
+```
+
+Do not bake secrets into the image. Pass them at runtime.
+
+Local HTTP without Docker:
+
+```bash
+npm run build
+MCP_TOKEN="<token>" npm run chatgpt:mcp:http
+```
 
 ## Run locally
 

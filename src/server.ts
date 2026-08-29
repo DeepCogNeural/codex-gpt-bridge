@@ -1,9 +1,7 @@
-import { createServer, type Server as HttpServer } from "node:http";
+import type { Server as HttpServer } from "node:http";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
-import type { NextFunction, Request, Response } from "express";
 import type { BridgeConfig } from "./config.js";
+import { createStatelessMcpHttpServer, type McpHttpAuth } from "./mcpHttp.js";
 import type { CodexUpstream } from "./upstream.js";
 import { CodexJobRegistry, registerBridgeTools } from "./tools.js";
 import { SessionRegistry } from "./sessionRegistry.js";
@@ -30,95 +28,24 @@ export function createBridgeMcpServer(
 }
 
 export function createHttpServer(config: BridgeConfig, upstream: CodexUpstream): HttpServer {
-  const app = createMcpExpressApp({
-    allowedHosts: config.allowedHosts,
-    host: config.host
-  });
   const sessions = new SessionRegistry();
   const jobs = new CodexJobRegistry();
-
-  app.get(
-    ["/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/mcp"],
-    (_req: Request, res: Response) => {
-      res.status(404).json({
-        error: "oauth_metadata_not_configured",
-        message: "This local bridge runs with No Auth when it is behind OpenAI Secure MCP Tunnel."
-      });
-    }
-  );
-
-  app.get("/healthz", (_req: Request, res: Response) => {
-    res.json({
-      ok: true,
-      name: "codex-gpt-bridge"
-    });
+  return createStatelessMcpHttpServer({
+    name: "codex-gpt-bridge",
+    host: config.host,
+    allowedHosts: config.allowedHosts,
+    auth: bridgeAuth(config),
+    oauthMetadataMessage: "This local bridge runs with No Auth when it is behind OpenAI Secure MCP Tunnel.",
+    createMcpServer: () => createBridgeMcpServer(config, upstream, sessions, jobs)
   });
-
-  app.use("/mcp", (req: Request, res: Response, next: NextFunction) => {
-    if (isAuthorized(req.headers.authorization, config)) {
-      next();
-      return;
-    }
-    res.status(401).json({
-      error: "unauthorized"
-    });
-  });
-
-  app.post("/mcp", async (req: Request, res: Response) => {
-    const server = createBridgeMcpServer(config, upstream, sessions, jobs);
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined
-    });
-
-    try {
-      await server.connect(transport);
-      await transport.handleRequest(req, res, req.body);
-    } catch (error) {
-      console.error("MCP request failed:", error);
-      if (!res.headersSent) {
-        res.status(500).json({
-          jsonrpc: "2.0",
-          error: {
-            code: -32603,
-            message: "Internal server error"
-          },
-          id: null
-        });
-      }
-    } finally {
-      await transport.close();
-      await server.close();
-    }
-  });
-
-  app.get("/mcp", (_req: Request, res: Response) => {
-    res.status(405).json({
-      jsonrpc: "2.0",
-      error: {
-        code: -32000,
-        message: "Method not allowed."
-      },
-      id: null
-    });
-  });
-
-  app.delete("/mcp", (_req: Request, res: Response) => {
-    res.status(405).json({
-      jsonrpc: "2.0",
-      error: {
-        code: -32000,
-        message: "Method not allowed."
-      },
-      id: null
-    });
-  });
-
-  return createServer(app);
 }
 
-function isAuthorized(header: string | undefined, config: BridgeConfig): boolean {
+function bridgeAuth(config: BridgeConfig): McpHttpAuth {
   if (config.noAuth) {
-    return true;
+    return { mode: "off" };
   }
-  return header === `Bearer ${config.token}`;
+  if (!config.token) {
+    throw new Error("Set CODEX_GPT_BRIDGE_TOKEN, or set CODEX_GPT_BRIDGE_NO_AUTH=1 for local-only development.");
+  }
+  return { mode: "bearer", token: config.token };
 }

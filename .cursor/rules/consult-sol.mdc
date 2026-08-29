@@ -1,0 +1,14 @@
+---
+description: When work in this repo is complex or stuck, consult gpt-sol ask_chatgpt. Not required for Plan Mode.
+alwaysApply: true
+---
+
+# Consult Sol when it earns a call
+
+Follow the personal skill `ask-chatgpt` plus the overlay `.cursor/skills/ask-chatgpt/SKILL.md`.
+
+Do not call `ask_chatgpt` only because you are in Plan Mode. Call it from any mode when the problem has real tradeoffs, you are stuck after a local investigation, security or data integrity is involved, or the user asked for Sol.
+
+If you call it, use MCP server `gpt-sol` (namespace may be `user-gpt-sol`), tool `ask_chatgpt`, default `reasoningEffort: medium`. If MCP is missing or the call fails, say so. Do not pretend Sol was consulted.
+
+Do not call Codex-bridge tools (`codex_read`, `codex_run`, …) as Sol.
